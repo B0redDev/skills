@@ -1,0 +1,52 @@
+{
+  "skill_name": "design-proposal",
+  "evals": [
+    {
+      "id": 1,
+      "name": "expo-settings-mobile",
+      "prompt": "Devo rifare la schermata impostazioni della mia app Expo per seguire le partite di calcio: notifiche per squadra preferita (gol, inizio partita, risultato finale), lingua, tema chiaro/scuro, gestione account e abbonamento premium. Prima di toccare il codice fammi vedere qualche proposta di design.",
+      "expected_output": "Single self-contained HTML with 2-4 structurally different mobile settings designs in tabs, realistic football content, per-variant tradeoffs, and a message asking the user to pick/comment. No production code.",
+      "files": [],
+      "assertions": [
+        "single_self_contained_html",
+        "multiple_variants_in_tabs",
+        "variants_structurally_different",
+        "realistic_content_no_lorem",
+        "tradeoffs_per_variant",
+        "mobile_frame_used",
+        "asks_for_feedback_no_prod_code"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "analytics-dashboard-desktop",
+      "prompt": "I'm building a self-hosted, privacy-friendly web analytics tool. I need the main dashboard: visitors over time, top pages, referrers, countries, devices, and a realtime 'people online now' counter. Show me a few layout options before I build it.",
+      "expected_output": "Single self-contained HTML with 2-4 genuinely different dashboard layouts (not color swaps) in tabs, plausible analytics numbers, tradeoffs, and a request for feedback.",
+      "files": [],
+      "assertions": [
+        "single_self_contained_html",
+        "multiple_variants_in_tabs",
+        "variants_structurally_different",
+        "realistic_content_no_lorem",
+        "tradeoffs_per_variant",
+        "asks_for_feedback_no_prod_code"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "onboarding-flow-multistep",
+      "prompt": "app per imparare il giapponese leggendo manga, mi serve l'onboarding: l'utente sceglie livello JLPT (o 'non lo so'), generi preferiti, obiettivo giornaliero in minuti. come lo faresti? voglio vedere delle alternative",
+      "expected_output": "Single self-contained HTML with alternative onboarding flows (e.g. stepper vs single scroll vs conversational) showing the relevant steps/states, mobile frame, realistic Japanese/manga content, tradeoffs, and a feedback request.",
+      "files": [],
+      "assertions": [
+        "single_self_contained_html",
+        "multiple_variants_in_tabs",
+        "variants_structurally_different",
+        "realistic_content_no_lorem",
+        "tradeoffs_per_variant",
+        "mobile_frame_used",
+        "asks_for_feedback_no_prod_code"
+      ]
+    }
+  ]
+}

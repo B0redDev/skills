@@ -1,0 +1,187 @@
+<!doctype html>
+<!--
+  Design proposal shell.
+  - Replace PROPOSAL_TITLE / PROPOSAL_SUBTITLE.
+  - One <section class="dp-variant"> per variant: id="v-a", "v-b", …; data-name is the tab label.
+  - Scope variant CSS under its id (#v-a …). Chrome styles use the .dp- prefix; don't reuse it.
+  - The frame is a size container named "frame": use @container frame (max-width: …) for responsive rules.
+  - <body data-default-frame="mobile"> for mobile-first proposals (desktop | tablet | mobile).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROPOSAL_TITLE — design proposal</title>
+<style>
+  :root {
+    --dp-bg: #f4f4f5; --dp-fg: #18181b; --dp-muted: #71717a; --dp-line: #e4e4e7;
+    --dp-accent: #18181b; --dp-panel: #ffffff;
+    --dp-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --dp-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --dp-bg: #0f0f11; --dp-fg: #f4f4f5; --dp-muted: #a1a1aa; --dp-line: #27272a; --dp-accent: #f4f4f5; --dp-panel: #18181b; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--dp-bg); color: var(--dp-fg); font: 14px/1.45 var(--dp-font); scrollbar-color: var(--dp-line) transparent; }
+  .dp-header ::selection, .dp-notes ::selection { background: var(--dp-accent); color: var(--dp-panel); }
+
+  .dp-header { position: sticky; top: 0; z-index: 100; background: var(--dp-panel); border-bottom: 1px solid var(--dp-line); }
+  .dp-header-row { display: flex; align-items: center; gap: 16px; padding: 12px 20px; flex-wrap: wrap; }
+  .dp-title { font-weight: 600; font-size: 15px; }
+  .dp-subtitle { color: var(--dp-muted); }
+  .dp-spacer { flex: 1; }
+  .dp-tabs { display: flex; gap: 4px; padding: 0 16px; overflow-x: auto; }
+  .dp-tab, .dp-seg button {
+    font: inherit; color: var(--dp-muted); background: none; border: 0; cursor: pointer;
+    padding: 10px 12px; border-bottom: 2px solid transparent; white-space: nowrap;
+    /* Only press feedback moves; selection changes (click or keys 1–9) switch instantly. */
+    transition: transform 160ms var(--dp-ease-out), color 150ms ease;
+  }
+  .dp-tab:active, .dp-seg button:active { transform: scale(0.97); }
+  @media (hover: hover) and (pointer: fine) {
+    .dp-tab:hover, .dp-seg button:not([aria-pressed="true"]):hover { color: var(--dp-fg); }
+  }
+  .dp-tab[aria-selected="true"] { color: var(--dp-fg); border-bottom-color: var(--dp-accent); font-weight: 600; }
+  .dp-tab kbd { font: 11px var(--dp-font); color: var(--dp-muted); border: 1px solid var(--dp-line); border-radius: 4px; padding: 0 4px; margin-right: 6px; }
+  .dp-seg { display: inline-flex; border: 1px solid var(--dp-line); border-radius: 8px; overflow: hidden; }
+  .dp-seg button { padding: 5px 10px; border: 0; }
+  .dp-seg button[aria-pressed="true"] { background: var(--dp-accent); color: var(--dp-panel); }
+  .dp-tab:focus-visible, .dp-seg button:focus-visible { outline: 2px solid var(--dp-accent); outline-offset: -2px; }
+
+  .dp-main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; padding: 20px; align-items: start; }
+  @media (max-width: 1000px) { .dp-main { grid-template-columns: 1fr; } }
+  .dp-stage { display: flex; justify-content: center; }
+  .dp-frame {
+    container: frame / inline-size;
+    width: 100%; background: #fff; color: #18181b; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 1px 2px rgb(0 0 0 / .06), 0 8px 24px rgb(0 0 0 / .08);
+  }
+  body[data-frame="tablet"] .dp-frame { width: 768px; }
+  body[data-frame="mobile"] .dp-frame { width: 390px; min-height: 780px; border-radius: 36px; border: 10px solid #18181b; }
+  @media (prefers-color-scheme: dark) { body[data-frame="mobile"] .dp-frame { border-color: #3f3f46; } }
+  @media (prefers-reduced-motion: reduce) { .dp-tab:active, .dp-seg button:active { transform: none; } }
+
+  .dp-notes { position: sticky; top: 120px; background: var(--dp-panel); border: 1px solid var(--dp-line); border-radius: 12px; padding: 16px; }
+  .dp-notes h2 { font-size: 18px; line-height: 1.3; letter-spacing: -0.01em; margin: 0 0 8px; }
+  .dp-notes h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--dp-muted); margin: 14px 0 4px; }
+  .dp-notes p, .dp-notes ul { margin: 0; }
+  .dp-notes ul { padding-left: 18px; }
+
+  .dp-variant[hidden], .dp-variant-notes[hidden] { display: none; }
+
+  /* ───────── Variant styles: scope everything under #v-a, #v-b, … ───────── */
+  #v-a { padding: 32px; }
+  #v-b { padding: 32px; }
+  #v-c { padding: 32px; }
+  @container frame (max-width: 600px) {
+    #v-a, #v-b, #v-c { padding: 16px; }
+  }
+</style>
+</head>
+<body data-default-frame="desktop">
+  <header class="dp-header">
+    <div class="dp-header-row">
+      <div>
+        <div class="dp-title">PROPOSAL_TITLE</div>
+        <div class="dp-subtitle">PROPOSAL_SUBTITLE</div>
+      </div>
+      <div class="dp-spacer"></div>
+      <div class="dp-seg" role="group" aria-label="Preview size">
+        <button type="button" data-frame="desktop">Desktop</button>
+        <button type="button" data-frame="tablet">Tablet</button>
+        <button type="button" data-frame="mobile">Mobile</button>
+      </div>
+    </div>
+    <nav class="dp-tabs" role="tablist" aria-label="Variants"></nav>
+  </header>
+
+  <main class="dp-main">
+    <div class="dp-stage">
+      <div class="dp-frame">
+        <!-- ───────── Variant A ───────── -->
+        <section class="dp-variant" id="v-a" data-name="A · Variant name" role="tabpanel">
+          <!-- design markup -->
+        </section>
+
+        <!-- ───────── Variant B ───────── -->
+        <section class="dp-variant" id="v-b" data-name="B · Variant name" role="tabpanel">
+        </section>
+
+        <!-- ───────── Variant C ───────── -->
+        <section class="dp-variant" id="v-c" data-name="C · Variant name" role="tabpanel">
+        </section>
+      </div>
+    </div>
+
+    <aside class="dp-notes" aria-live="polite">
+      <!-- One notes block per variant; data-for must match the section id. -->
+      <div class="dp-variant-notes" data-for="v-a">
+        <h2>A · Variant name</h2>
+        <p>The idea in one sentence.</p>
+        <h3>Best for</h3><p>…</p>
+        <h3>Tradeoffs</h3><ul><li>+ …</li><li>− …</li></ul>
+        <!-- From round 2 on: <h3>Changes</h3><ul><li>…</li></ul> -->
+      </div>
+      <div class="dp-variant-notes" data-for="v-b">
+        <h2>B · Variant name</h2>
+      </div>
+      <div class="dp-variant-notes" data-for="v-c">
+        <h2>C · Variant name</h2>
+      </div>
+    </aside>
+  </main>
+
+<script>
+(() => {
+  const variants = [...document.querySelectorAll('.dp-variant')];
+  const tablist = document.querySelector('.dp-tabs');
+  const tabs = variants.map((v, i) => {
+    const b = document.createElement('button');
+    b.className = 'dp-tab'; b.type = 'button'; b.role = 'tab';
+    b.id = 'tab-' + v.id; b.setAttribute('aria-controls', v.id);
+    v.setAttribute('aria-labelledby', b.id);
+    b.innerHTML = (i < 9 ? `<kbd>${i + 1}</kbd>` : '') + v.dataset.name;
+    b.onclick = () => select(i, true);
+    tablist.append(b);
+    return b;
+  });
+
+  function select(i, focus) {
+    i = (i + variants.length) % variants.length;
+    variants.forEach((v, j) => { v.hidden = j !== i; tabs[j].setAttribute('aria-selected', j === i); tabs[j].tabIndex = j === i ? 0 : -1; });
+    document.querySelectorAll('.dp-variant-notes').forEach(n => n.hidden = n.dataset.for !== variants[i].id);
+    current = i;
+    saveHash();
+    if (focus) tabs[i].focus();
+  }
+
+  function setFrame(f) {
+    document.body.dataset.frame = f;
+    document.querySelectorAll('.dp-seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.frame === f));
+    saveHash();
+  }
+  document.querySelectorAll('.dp-seg button').forEach(b => b.onclick = () => setFrame(b.dataset.frame));
+
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('input, textarea, select, [contenteditable]') || e.metaKey || e.ctrlKey || e.altKey) return;
+    const n = parseInt(e.key, 10);
+    if (n >= 1 && n <= variants.length) select(n - 1, false);
+    else if (e.key === 'ArrowRight' && e.target.closest('.dp-tabs')) select(current + 1, true);
+    else if (e.key === 'ArrowLeft' && e.target.closest('.dp-tabs')) select(current - 1, true);
+  });
+
+  // replaceState throws in sandboxed/srcdoc frames; state persistence is optional there.
+  function saveHash() { try { history.replaceState(null, '', '#' + variants[current].id + '@' + document.body.dataset.frame); } catch {} }
+
+  let current = 0;
+  const [hashId, hashFrame] = location.hash.slice(1).split('@');
+  document.body.dataset.frame = hashFrame || document.body.dataset.defaultFrame || 'desktop';
+  const start = Math.max(0, variants.findIndex(v => v.id === hashId));
+  select(start, false);
+  setFrame(document.body.dataset.frame);
+})();
+</script>
+</body>
+</html>
