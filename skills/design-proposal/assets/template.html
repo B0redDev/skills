@@ -97,6 +97,9 @@
   .dp-status-icons { display: flex; align-items: center; gap: 6px; }
   .dp-status-icons svg { display: block; fill: currentColor; }
   body[data-frame="mobile"] .dp-safari { display: block; bottom: 0; height: var(--dp-toolbar-h); }
+  /* iOS 26 scroll edge effect: the page fades into its own colour under the toolbar. */
+  .dp-safari::before { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent, var(--dp-theme) 35%); }
+  .dp-safari-row { position: relative; }
   .dp-safari-row { display: flex; align-items: center; gap: 10px; padding: 6px 14px 0; }
   body[data-mobile-chrome="app"] .dp-safari-row { display: none; }
   .dp-glass {
