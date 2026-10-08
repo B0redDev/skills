@@ -21,7 +21,7 @@ Variants that ignore the real product are useless for approval, so look first:
 
 - **Brief**: what is being designed, for whom, the primary task on the screen, hard constraints (platform, existing flows, data shown).
 - **Existing design language** (if there's a codebase): grep for theme/tokens files, Tailwind config, CSS variables, component library, fonts, icon set. Reuse real colors, radii, type scale, spacing, and copy tone so the proposal looks like *their* product. With impeccable: run `<impeccable-dir>/scripts/impeccable context` once from the project root. It loads `PRODUCT.md`, `DESIGN.md` and any surface brief, and those outrank your own grep. A missing `PRODUCT.md` doesn't block a proposal, so skip the init it suggests.
-- **Platform**: web desktop, responsive web, or mobile app. This decides the default frame (see template).
+- **Platform**: web desktop, responsive web, mobile web, or native mobile app. This decides the default frame and, on mobile, whether Safari's chrome is shown (see template).
 - **Real content**: use plausible domain data (real-looking names, numbers, dates, labels). Never lorem ipsum — fake text hides layout problems and makes variants hard to judge.
 
 If a missing answer would change the variants fundamentally (e.g. mobile vs desktop), ask one batched question. Otherwise make a reasonable assumption, state it in the notes, and proceed.
@@ -57,11 +57,12 @@ Note the motion choices in the variant's notes.
 
 ## 3. Build the HTML file
 
-Start from `assets/template.html` (read it; it contains the tab shell, keyboard navigation, notes panel, and a desktop/tablet/mobile frame toggle). With impeccable, read `<impeccable-dir>/reference/craft-floor.md` right before writing the variants. Its checks and bans apply to mockups as much as to shipped UI, and the user will judge what they see. Rules:
+Start from `assets/template.html` (read it; it contains the tab shell, keyboard navigation, notes panel, and a desktop/tablet/mobile frame toggle, where mobile is a real-size iPhone in Safari). With impeccable, read `<impeccable-dir>/reference/craft-floor.md` right before writing the variants. Its checks and bans apply to mockups as much as to shipped UI, and the user will judge what they see. Rules:
 
 - **One file, no build step, no external requests** — raw HTML + CSS, inline SVG for icons, system font stack unless the project's font is essential (then a single Google Fonts `<link>` is acceptable). It must render offline and stay shareable.
 - Scope every variant's CSS under its section id (`#v-a .card {…}`) so variants don't bleed into each other or into the `.dp-` chrome.
-- Frames are container-query containers: write responsive rules with `@container frame (max-width: 600px)` instead of `@media`, so the frame toggle actually previews breakpoints. Set `data-default-frame="mobile"` on `<body>` for mobile-app proposals.
+- Frames are container-query containers: write responsive rules with `@container frame (max-width: 600px)` instead of `@media`, so the frame toggle actually previews breakpoints. Set `data-default-frame="mobile"` on `<body>` for mobile proposals.
+- The mobile frame is an iPhone 15/16 at its real size (393 × 852 pt) in Safari: status bar with the Dynamic Island, the iOS 26 floating toolbar and the home indicator. The page scrolls inside the screen, so the user sees what really fits above the fold. Put the page's domain in `data-url` on `<body>`. For a native app set `data-mobile-chrome="app"`: it keeps the status bar and home indicator and drops Safari. The bars take their tint from the variant section's background, with white ink on dark pages; `data-theme-color` on the section overrides it, like `<meta name="theme-color">`. Anchor app bars and sticky CTAs with `position: sticky` (`top: 0` / `bottom: 0`) inside the variant, never `position: fixed`: sticky stops at the status bar and the toolbar, fixed escapes the device.
 - Minimal JS only for interactions that are part of the decision (e.g. opening a drawer). Static is fine otherwise.
 - Keep the file readable; the user or a later agent may reuse chunks when implementing.
 
