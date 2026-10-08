@@ -6,8 +6,8 @@
   - Scope variant CSS under its id (#v-a …). Chrome styles use the .dp- prefix; don't reuse it.
   - The frame is a size container named "frame": use @container frame (max-width: …) for responsive rules.
   - <body data-default-frame="mobile"> for mobile-first proposals (desktop | tablet | mobile).
-  - Mobile is an iPhone 15/16 in Safari at its real size; the page scrolls inside the screen.
-    <body data-url="…"> sets the address bar; data-mobile-chrome="app" drops Safari's toolbar for native apps.
+  - Mobile is an iPhone 15/16 and tablet an iPad Air 11" (portrait), in Safari at their real size; the page
+    scrolls inside the screen. <body data-url="…"> sets the address bar; data-chrome="app" drops Safari for native apps.
     Safari tints its bars with the variant's background; set data-theme-color on a section to override it.
     Bars that stick to the screen edge use position: sticky inside the variant, never position: fixed.
 -->
@@ -56,6 +56,8 @@
 
   .dp-main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; padding: 20px; align-items: start; }
   @media (max-width: 1000px) { .dp-main { grid-template-columns: 1fr; } }
+  /* The iPad does not fit beside the notes on narrower screens: stack them. */
+  @media (max-width: 1220px) { body[data-frame="tablet"] .dp-main { grid-template-columns: 1fr; } }
   .dp-stage { display: flex; justify-content: center; }
   .dp-frame {
     /* --dp-theme is the page colour Safari tints its bars with; the script sets it per variant. */
@@ -65,54 +67,75 @@
   }
   .dp-frame[data-tone="dark"] { --dp-device-fg: #fff; --dp-glass: rgb(44 44 46 / .72); --dp-glass-line: rgb(255 255 255 / .14); }
   .dp-viewport { container: frame / inline-size; }
-  body[data-frame="tablet"] .dp-frame { width: 768px; }
 
-  /* Mobile: iPhone 15/16 (393 × 852 pt) in Safari, iOS 26 compact tab bar. The page scrolls inside the
-     screen at the real height, so the fold, the status bar and Safari's toolbar cover what they really cover. */
+  /* Mobile and tablet are real devices at their real size, in Safari (iOS / iPadOS 26): iPhone 15/16 (393 × 852 pt)
+     and iPad Air 11" in portrait (820 × 1180 pt). The page scrolls inside the screen, so the fold, the status bar
+     and Safari's toolbars cover what they really cover. */
   .dp-statusbar, .dp-safari { display: none; }
-  body[data-frame="mobile"] .dp-frame {
-    --dp-status-h: 54px; --dp-toolbar-h: 90px;
-    box-sizing: content-box; flex: none; width: 393px; height: 852px;
-    border: 11px solid #1c1c1e; border-radius: 66px;
+  body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-frame {
+    box-sizing: content-box; flex: none; border: 11px solid #1c1c1e;
     box-shadow: 0 0 0 1.5px #48484a, 0 2px 4px rgb(0 0 0 / .1), 0 24px 60px rgb(0 0 0 / .22);
   }
-  body[data-frame="mobile"][data-mobile-chrome="app"] .dp-frame { --dp-toolbar-h: 34px; }
-  body[data-frame="mobile"] .dp-viewport {
+  body[data-frame="mobile"] .dp-frame { --dp-status-h: 54px; --dp-toolbar-h: 90px; width: 393px; height: 852px; border-radius: 66px; }
+  body[data-frame="tablet"] .dp-frame { --dp-status-h: 74px; --dp-toolbar-h: 20px; width: 820px; height: 1180px; border-width: 18px; border-radius: 36px; }
+  body[data-frame="mobile"][data-chrome="app"] .dp-frame { --dp-toolbar-h: 34px; }
+  body[data-frame="tablet"][data-chrome="app"] .dp-frame { --dp-status-h: 24px; }
+  body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-viewport {
     position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
     padding: var(--dp-status-h) 0 var(--dp-toolbar-h);
   }
-  body[data-frame="mobile"] .dp-viewport::-webkit-scrollbar { display: none; }
-  body[data-frame="mobile"] .dp-variant { min-height: 100%; }
-  body[data-frame="mobile"] .dp-statusbar, body[data-frame="mobile"] .dp-safari {
+  body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-viewport::-webkit-scrollbar { display: none; }
+  body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-variant { min-height: 100%; }
+  body:is([data-frame="mobile"], [data-frame="tablet"]) :is(.dp-statusbar, .dp-safari) {
     position: absolute; z-index: 2; left: 0; right: 0; color: var(--dp-device-fg); pointer-events: none;
     font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
   }
-  body[data-frame="mobile"] .dp-statusbar {
-    display: grid; grid-template-columns: 1fr 125px 1fr; align-items: center; top: 0; height: var(--dp-status-h); padding-top: 4px;
+  body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-statusbar {
+    display: grid; align-items: center; top: 0; height: var(--dp-status-h);
     background: color-mix(in srgb, var(--dp-theme) 85%, transparent); -webkit-backdrop-filter: blur(12px) saturate(180%); backdrop-filter: blur(12px) saturate(180%);
     font-size: 17px; font-weight: 600; letter-spacing: -0.02em;
   }
-  .dp-clock, .dp-status-icons { justify-self: center; }
+  body[data-frame="mobile"] .dp-statusbar { grid-template-columns: 1fr 125px 1fr; padding-top: 4px; }
+  body[data-frame="tablet"] .dp-statusbar { grid-template-columns: 1fr auto; grid-template-rows: 24px; align-content: start; padding: 0 22px; font-size: 15px; letter-spacing: 0; }
+  body[data-frame="mobile"] :is(.dp-clock, .dp-status-icons) { justify-self: center; }
   .dp-island { height: 37px; border-radius: 19px; background: #000; }
   .dp-status-icons { display: flex; align-items: center; gap: 6px; }
   .dp-status-icons svg { display: block; fill: currentColor; }
-  body[data-frame="mobile"] .dp-safari { display: block; bottom: 0; height: var(--dp-toolbar-h); }
-  /* iOS 26 scroll edge effect: the page fades into its own colour under the toolbar. */
-  .dp-safari::before { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent, var(--dp-theme) 35%); }
-  .dp-safari-row { position: relative; }
-  .dp-safari-row { display: flex; align-items: center; gap: 10px; padding: 6px 14px 0; }
-  body[data-mobile-chrome="app"] .dp-safari-row { display: none; }
+  .dp-date { margin-left: 6px; }
+  body:not([data-frame="tablet"]) .dp-date, body[data-frame="tablet"] :is(.dp-island, .dp-signal) { display: none; }
+
+  /* iPhone: iOS 26 compact tab bar, floating at the bottom. */
+  body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-safari { display: block; bottom: 0; height: var(--dp-toolbar-h); }
+  /* Scroll edge effect: the page fades into its own colour under the floating toolbar. */
+  body[data-frame="mobile"]:not([data-chrome="app"]) .dp-safari::before { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent, var(--dp-theme) 35%); }
+  .dp-safari-row { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 14px 0; }
+  body:is([data-frame="tablet"], [data-chrome="app"]) .dp-safari-row { display: none; }
   .dp-glass {
     display: inline-flex; align-items: center; justify-content: center; height: 48px; border-radius: 24px;
     background: var(--dp-glass); -webkit-backdrop-filter: blur(14px) saturate(180%); backdrop-filter: blur(14px) saturate(180%);
     box-shadow: inset 0 0 0 .5px var(--dp-glass-line), 0 6px 20px rgb(0 0 0 / .12);
   }
-  .dp-glass svg { display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  :is(.dp-glass, .dp-ipad-toolbar) svg { display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .dp-round { flex: none; width: 48px; }
   .dp-address { flex: 1; min-width: 0; justify-content: space-between; gap: 8px; padding: 0 16px; font-size: 15px; }
   .dp-url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .dp-home { position: absolute; bottom: 8px; left: 50%; width: 139px; height: 5px; margin-left: -69.5px; border-radius: 3px; background: currentColor; }
-  @media (prefers-color-scheme: dark) { body[data-frame="mobile"] .dp-frame { border-color: #2c2c2e; box-shadow: 0 0 0 1.5px #636366, 0 24px 60px rgb(0 0 0 / .5); } }
+  .dp-home { position: absolute; bottom: 8px; left: 50%; width: 139px; height: 5px; transform: translateX(-50%); border-radius: 3px; background: currentColor; }
+  body[data-frame="tablet"] .dp-home { bottom: 7px; width: 200px; }
+
+  /* iPad: Safari's toolbar sits at the top, under the status bar. */
+  .dp-ipad-toolbar { display: none; }
+  body[data-frame="tablet"]:not([data-chrome="app"]) .dp-ipad-toolbar {
+    grid-column: 1 / -1; display: grid; grid-template-columns: 1fr minmax(0, 420px) 1fr; align-items: center; gap: 16px; height: 50px;
+    font-size: 15px; font-weight: 400;
+  }
+  .dp-tools { display: flex; align-items: center; gap: 22px; }
+  .dp-tools:last-child { justify-self: end; }
+  .dp-tools .dp-off { opacity: .3; }
+  .dp-ipad-address {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; height: 36px; padding: 0 12px;
+    border-radius: 12px; background: color-mix(in srgb, var(--dp-device-fg) 8%, transparent);
+  }
+  @media (prefers-color-scheme: dark) { body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-frame { border-color: #2c2c2e; box-shadow: 0 0 0 1.5px #636366, 0 24px 60px rgb(0 0 0 / .5); } }
   @media (prefers-reduced-motion: reduce) { .dp-tab:active, .dp-seg button:active { transform: none; } }
 
   .dp-notes { position: sticky; top: 120px; background: var(--dp-panel); border: 1px solid var(--dp-line); border-radius: 12px; padding: 16px; }
@@ -154,13 +177,30 @@
       <div class="dp-frame">
         <!-- Device chrome, shown only in the mobile frame. -->
         <div class="dp-statusbar" aria-hidden="true">
-          <span class="dp-clock">9:41</span>
+          <span class="dp-clock">9:41<span class="dp-date"></span></span>
           <span class="dp-island"></span>
           <span class="dp-status-icons">
-            <svg width="18" height="12" viewBox="0 0 18 12"><rect y="7.5" width="3" height="4.5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" width="3" height="12" rx="1"/></svg>
+            <svg class="dp-signal" width="18" height="12" viewBox="0 0 18 12"><rect y="7.5" width="3" height="4.5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" width="3" height="12" rx="1"/></svg>
             <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 2.3c2.2 0 4.2.8 5.7 2.2.2.2.5.2.7 0l.9-.9c.2-.2.2-.5 0-.7A10.3 10.3 0 0 0 .7 2.9c-.2.2-.2.5 0 .7l.9.9c.2.2.5.2.7 0A8.2 8.2 0 0 1 8 2.3Zm0 3.4c1.3 0 2.4.4 3.4 1.2.2.2.5.2.7 0l.9-.9c.2-.2.2-.5 0-.7a7 7 0 0 0-10 0c-.2.2-.2.5 0 .7l.9.9c.2.2.5.2.7 0 1-.8 2.1-1.2 3.4-1.2Zm2.2 3.1c.2-.2.2-.5 0-.7a3.3 3.3 0 0 0-4.4 0c-.2.2-.2.5 0 .7l1.9 1.9c.2.2.5.2.7 0l1.8-1.9Z"/></svg>
             <svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.8" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="20" height="9" rx="2.5"/><path d="M25 4.4v4.2a2.3 2.3 0 0 0 0-4.2Z" opacity=".45"/></svg>
           </span>
+          <div class="dp-ipad-toolbar">
+            <span class="dp-tools">
+              <svg width="24" height="24" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M9.5 5v14"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+              <svg class="dp-off" width="24" height="24" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+            </span>
+            <span class="dp-ipad-address">
+              <svg width="18" height="18" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h5"/></svg>
+              <span class="dp-url"></span>
+              <svg width="18" height="18" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4v4h-4"/></svg>
+            </span>
+            <span class="dp-tools">
+              <svg width="24" height="24" viewBox="0 0 24 24"><path d="M8.5 10H7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1.5M12 3v12M8.5 6.5 12 3l3.5 3.5"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M4.5 15.5V7a2.5 2.5 0 0 1 2.5-2.5h8.5"/></svg>
+            </span>
+          </div>
         </div>
         <div class="dp-safari" aria-hidden="true">
           <div class="dp-safari-row">
@@ -240,7 +280,10 @@
   const frame = document.querySelector('.dp-frame');
   const viewport = document.querySelector('.dp-viewport');
   const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
-  document.querySelector('.dp-url').textContent = document.body.dataset.url || 'example.com';
+  document.querySelectorAll('.dp-url').forEach(u => u.textContent = document.body.dataset.url || 'example.com');
+  // iPadOS shows the date next to the clock, e.g. "Thu Oct 8".
+  document.querySelector('.dp-date').textContent = new Date()
+    .toLocaleDateString(document.documentElement.lang || undefined, { weekday: 'short', month: 'short', day: 'numeric' }).replace(/,/g, '');
   function syncDevice(v) {
     probe.clearRect(0, 0, 1, 1);
     probe.fillStyle = 'transparent'; // an invalid colour below leaves fillStyle unchanged
