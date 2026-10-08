@@ -312,7 +312,9 @@
     const [r, g, b, a] = probe.getImageData(0, 0, 1, 1).data;
     const theme = a ? `rgb(${r} ${g} ${b})` : '#fff';
     frame.style.setProperty('--dp-theme', theme);
-    frame.dataset.tone = a && 0.299 * r + 0.587 * g + 0.114 * b < 140 ? 'dark' : 'light';
+    // WCAG relative luminance; below 0.179 white ink has more contrast than black.
+    const lum = [r, g, b].map(c => (c /= 255) <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+    frame.dataset.tone = a && 0.2126 * lum[0] + 0.7152 * lum[1] + 0.0722 * lum[2] < 0.179 ? 'dark' : 'light';
     viewport.scrollTop = 0;
   }
 
@@ -344,7 +346,7 @@
   // replaceState throws in sandboxed/srcdoc frames; state persistence is optional there.
   function saveHash() {
     const { frame, orientation } = document.body.dataset;
-    try { history.replaceState(null, '', '#' + variants[current].id + '@' + frame + (orientation === 'landscape' ? '@landscape' : '')); } catch {}
+    try { history.replaceState(null, '', '#' + variants[current].id + '@' + frame + '@' + orientation); } catch {}
   }
 
   let current = 0;
