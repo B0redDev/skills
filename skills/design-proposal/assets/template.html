@@ -74,9 +74,7 @@
   .dp-frame[data-tone="dark"] { --dp-device-fg: #fff; --dp-glass: rgb(44 44 46 / .72); --dp-glass-line: rgb(255 255 255 / .14); }
   .dp-viewport { container: frame / inline-size; }
 
-  /* Mobile and tablet are real devices at their real size, in Safari (iOS / iPadOS 26): iPhone 15/16 (393 × 852 pt)
-     and iPad Air 11" in portrait (820 × 1180 pt). The page scrolls inside the screen, so the fold, the status bar
-     and Safari's toolbars cover what they really cover. */
+  /* Mobile and tablet: real-size devices in Safari; the page scrolls inside the screen. */
   .dp-statusbar, .dp-safari { display: none; }
   body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-frame {
     box-sizing: content-box; flex: none; border: 11px solid #1c1c1e;
@@ -197,7 +195,7 @@
   <main class="dp-main">
     <div class="dp-stage">
       <div class="dp-frame">
-        <!-- Device chrome, shown only in the mobile frame. -->
+        <!-- Device chrome, shown only in the mobile and tablet frames. -->
         <div class="dp-statusbar" aria-hidden="true">
           <span class="dp-clock">9:41<span class="dp-date"></span></span>
           <span class="dp-island"></span>
@@ -301,7 +299,7 @@
   // ink to white on dark pages. Canvas normalises any CSS colour (hex, oklch, …) to RGBA.
   const frame = document.querySelector('.dp-frame');
   const viewport = document.querySelector('.dp-viewport');
-  const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+  const probe = document.createElement('canvas').getContext('2d');
   document.querySelectorAll('.dp-url').forEach(u => u.textContent = document.body.dataset.url || 'example.com');
   // iPadOS shows the date next to the clock, e.g. "Thu Oct 8".
   document.querySelector('.dp-date').textContent = new Date()
