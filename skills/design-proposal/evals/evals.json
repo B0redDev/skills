@@ -14,6 +14,7 @@
         "realistic_content_no_lorem",
         "tradeoffs_per_variant",
         "mobile_frame_used",
+        "native_app_chrome_without_safari",
         "asks_for_feedback_no_prod_code"
       ]
     },
@@ -45,6 +46,7 @@
         "realistic_content_no_lorem",
         "tradeoffs_per_variant",
         "mobile_frame_used",
+        "native_app_chrome_without_safari",
         "asks_for_feedback_no_prod_code"
       ]
     }

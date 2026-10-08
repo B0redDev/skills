@@ -6,6 +6,11 @@
   - Scope variant CSS under its id (#v-a …). Chrome styles use the .dp- prefix; don't reuse it.
   - The frame is a size container named "frame": use @container frame (max-width: …) for responsive rules.
   - <body data-default-frame="mobile"> for mobile-first proposals (desktop | tablet | mobile).
+  - Mobile is an iPhone 15/16 and tablet an iPad Air 11" (portrait), in Safari at their real size; the page
+    scrolls inside the screen. <body data-url="…"> sets the address bar; data-chrome="app" drops Safari for native apps.
+    Rotate (or R) turns the device to landscape; data-default-orientation="landscape" starts there.
+    Safari tints its bars with the variant's background; set data-theme-color on a section to override it.
+    Bars that stick to the screen edge use position: sticky inside the variant, never position: fixed.
 -->
 <html lang="en">
 <head>
@@ -48,19 +53,103 @@
   .dp-seg { display: inline-flex; border: 1px solid var(--dp-line); border-radius: 8px; overflow: hidden; }
   .dp-seg button { padding: 5px 10px; border: 0; }
   .dp-seg button[aria-pressed="true"] { background: var(--dp-accent); color: var(--dp-panel); }
+  .dp-rotate { display: inline-flex; align-items: center; gap: 6px; }
+  .dp-rotate svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .dp-rotate kbd { font: 11px var(--dp-font); opacity: .7; }
+  body[data-frame="desktop"] .dp-seg:has(.dp-rotate) { display: none; }
   .dp-tab:focus-visible, .dp-seg button:focus-visible { outline: 2px solid var(--dp-accent); outline-offset: -2px; }
 
   .dp-main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; padding: 20px; align-items: start; }
   @media (max-width: 1000px) { .dp-main { grid-template-columns: 1fr; } }
+  /* The iPad does not fit beside the notes on narrower screens: stack them. */
+  @media (max-width: 1220px) { body:is([data-frame="tablet"], [data-frame="mobile"][data-orientation="landscape"]) .dp-main { grid-template-columns: 1fr; } }
+  @media (max-width: 1600px) { body[data-frame="tablet"][data-orientation="landscape"] .dp-main { grid-template-columns: 1fr; } }
   .dp-stage { display: flex; justify-content: center; }
   .dp-frame {
-    container: frame / inline-size;
-    width: 100%; background: #fff; color: #18181b; border-radius: 12px; overflow: hidden;
+    /* --dp-theme is the page colour Safari tints its bars with; the script sets it per variant. */
+    --dp-theme: #fff; --dp-device-fg: #000; --dp-glass: rgb(250 250 250 / .72); --dp-glass-line: rgb(0 0 0 / .1);
+    position: relative; width: 100%; background: var(--dp-theme); color: #18181b; border-radius: 12px; overflow: hidden;
     box-shadow: 0 1px 2px rgb(0 0 0 / .06), 0 8px 24px rgb(0 0 0 / .08);
   }
-  body[data-frame="tablet"] .dp-frame { width: 768px; }
-  body[data-frame="mobile"] .dp-frame { width: 390px; min-height: 780px; border-radius: 36px; border: 10px solid #18181b; }
-  @media (prefers-color-scheme: dark) { body[data-frame="mobile"] .dp-frame { border-color: #3f3f46; } }
+  .dp-frame[data-tone="dark"] { --dp-device-fg: #fff; --dp-glass: rgb(44 44 46 / .72); --dp-glass-line: rgb(255 255 255 / .14); }
+  .dp-viewport { container: frame / inline-size; }
+
+  /* Mobile and tablet: real-size devices in Safari; the page scrolls inside the screen. */
+  .dp-statusbar, .dp-safari { display: none; }
+  body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-frame {
+    box-sizing: content-box; flex: none; border: 11px solid #1c1c1e;
+    box-shadow: 0 0 0 1.5px #48484a, 0 2px 4px rgb(0 0 0 / .1), 0 24px 60px rgb(0 0 0 / .22);
+  }
+  body[data-frame="mobile"] .dp-frame { --dp-status-h: 54px; --dp-toolbar-h: 90px; width: 393px; height: 852px; border-radius: 66px; }
+  body[data-frame="tablet"] .dp-frame { --dp-status-h: 74px; --dp-toolbar-h: 20px; width: 820px; height: 1180px; border-width: 18px; border-radius: 36px; }
+  body[data-frame="mobile"][data-chrome="app"] .dp-frame { --dp-toolbar-h: 34px; }
+  body[data-frame="tablet"][data-chrome="app"] .dp-frame { --dp-status-h: 24px; }
+  /* Landscape. iPhone: no status bar, Safari's toolbar moves to the top, the page is inset by the side safe
+     areas (the Dynamic Island's side and the opposite one). iPad: same bars, swapped dimensions. */
+  body[data-frame="mobile"][data-orientation="landscape"] .dp-frame { --dp-status-h: 44px; --dp-toolbar-h: 21px; --dp-side: 59px; width: 852px; height: 393px; }
+  body[data-frame="mobile"][data-orientation="landscape"][data-chrome="app"] .dp-frame { --dp-status-h: 0px; }
+  body[data-frame="tablet"][data-orientation="landscape"] .dp-frame { width: 1180px; height: 820px; }
+  body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-viewport {
+    position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
+    padding: var(--dp-status-h) var(--dp-side, 0px) var(--dp-toolbar-h);
+  }
+  body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-viewport::-webkit-scrollbar { display: none; }
+  body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-variant { min-height: 100%; }
+  body:is([data-frame="mobile"], [data-frame="tablet"]) :is(.dp-statusbar, .dp-safari) {
+    position: absolute; z-index: 2; left: 0; right: 0; color: var(--dp-device-fg); pointer-events: none;
+    font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
+  }
+  body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-statusbar {
+    display: grid; align-items: center; top: 0; height: var(--dp-status-h);
+    background: color-mix(in srgb, var(--dp-theme) 85%, transparent); -webkit-backdrop-filter: blur(12px) saturate(180%); backdrop-filter: blur(12px) saturate(180%);
+    font-size: 17px; font-weight: 600; letter-spacing: -0.02em;
+  }
+  body[data-frame="mobile"] .dp-statusbar { grid-template-columns: 1fr 125px 1fr; padding-top: 4px; }
+  body[data-frame="tablet"] .dp-statusbar { grid-template-columns: 1fr auto; grid-template-rows: 24px; align-content: start; padding: 0 22px; font-size: 15px; letter-spacing: 0; }
+  body[data-frame="mobile"] :is(.dp-clock, .dp-status-icons) { justify-self: center; }
+  body[data-frame="mobile"][data-orientation="landscape"] .dp-statusbar { display: block; padding: 0 var(--dp-side); }
+  body[data-frame="mobile"][data-orientation="landscape"] :is(.dp-clock, .dp-status-icons) { display: none; }
+  body[data-frame="mobile"][data-orientation="landscape"] .dp-island { position: absolute; left: 11px; top: 134px; width: 37px; height: 125px; }
+  .dp-island { height: 37px; border-radius: 19px; background: #000; }
+  .dp-status-icons { display: flex; align-items: center; gap: 6px; }
+  .dp-status-icons svg { display: block; fill: currentColor; }
+  .dp-date { margin-left: 6px; }
+  body:not([data-frame="tablet"]) .dp-date, body[data-frame="tablet"] :is(.dp-island, .dp-signal) { display: none; }
+
+  /* iPhone: iOS 26 compact tab bar, floating at the bottom. */
+  body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-safari { display: block; bottom: 0; height: var(--dp-toolbar-h); }
+  /* Scroll edge effect: the page fades into its own colour under the floating toolbar. */
+  body[data-frame="mobile"]:not([data-chrome="app"], [data-orientation="landscape"]) .dp-safari::before { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent, var(--dp-theme) 35%); }
+  .dp-safari-row { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 14px 0; }
+  body:is([data-frame="tablet"], [data-chrome="app"], [data-orientation="landscape"]) .dp-safari-row { display: none; }
+  .dp-glass {
+    display: inline-flex; align-items: center; justify-content: center; height: 48px; border-radius: 24px;
+    background: var(--dp-glass); -webkit-backdrop-filter: blur(14px) saturate(180%); backdrop-filter: blur(14px) saturate(180%);
+    box-shadow: inset 0 0 0 .5px var(--dp-glass-line), 0 6px 20px rgb(0 0 0 / .12);
+  }
+  :is(.dp-glass, .dp-toolbar-top) svg { display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .dp-round { flex: none; width: 48px; }
+  .dp-address { flex: 1; min-width: 0; justify-content: space-between; gap: 8px; padding: 0 16px; font-size: 15px; }
+  .dp-url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dp-home { position: absolute; bottom: 8px; left: 50%; width: 139px; height: 5px; transform: translateX(-50%); border-radius: 3px; background: currentColor; }
+  body:is([data-frame="tablet"], [data-orientation="landscape"]) .dp-home { bottom: 7px; width: 200px; }
+
+  /* iPad, and iPhone in landscape: Safari's toolbar sits at the top. */
+  .dp-toolbar-top { display: none; }
+  body[data-frame="mobile"][data-orientation="landscape"]:not([data-chrome="app"]) .dp-toolbar-top { display: grid; height: 44px; }
+  body[data-frame="tablet"]:not([data-chrome="app"]) .dp-toolbar-top { grid-column: 1 / -1; display: grid; }
+  .dp-toolbar-top {
+    grid-template-columns: 1fr minmax(0, 420px) 1fr; align-items: center; gap: 16px; height: 50px;
+    font-size: 15px; font-weight: 400;
+  }
+  .dp-tools { display: flex; align-items: center; gap: 22px; }
+  .dp-tools:last-child { justify-self: end; }
+  .dp-tools .dp-off { opacity: .3; }
+  .dp-top-address {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; height: 36px; padding: 0 12px;
+    border-radius: 12px; background: color-mix(in srgb, var(--dp-device-fg) 8%, transparent);
+  }
+  @media (prefers-color-scheme: dark) { body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-frame { border-color: #2c2c2e; box-shadow: 0 0 0 1.5px #636366, 0 24px 60px rgb(0 0 0 / .5); } }
   @media (prefers-reduced-motion: reduce) { .dp-tab:active, .dp-seg button:active { transform: none; } }
 
   .dp-notes { position: sticky; top: 120px; background: var(--dp-panel); border: 1px solid var(--dp-line); border-radius: 12px; padding: 16px; }
@@ -80,7 +169,7 @@
   }
 </style>
 </head>
-<body data-default-frame="desktop">
+<body data-default-frame="desktop" data-url="example.com">
   <header class="dp-header">
     <div class="dp-header-row">
       <div>
@@ -93,6 +182,12 @@
         <button type="button" data-frame="tablet">Tablet</button>
         <button type="button" data-frame="mobile">Mobile</button>
       </div>
+      <div class="dp-seg">
+        <button type="button" class="dp-rotate" aria-pressed="false" title="Rotate the device (R)">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5H6a2 2 0 0 0-2 2v3"/><path d="m9 8 3-3-3-3"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/></svg>
+          Rotate <kbd>R</kbd>
+        </button>
+      </div>
     </div>
     <nav class="dp-tabs" role="tablist" aria-label="Variants"></nav>
   </header>
@@ -100,6 +195,47 @@
   <main class="dp-main">
     <div class="dp-stage">
       <div class="dp-frame">
+        <!-- Device chrome, shown only in the mobile and tablet frames. Toolbar icons: Lucide (ISC), lucide.dev. -->
+        <div class="dp-statusbar" aria-hidden="true">
+          <span class="dp-clock">9:41<span class="dp-date"></span></span>
+          <span class="dp-island"></span>
+          <span class="dp-status-icons">
+            <svg class="dp-signal" width="18" height="12" viewBox="0 0 18 12"><rect y="7.5" width="3" height="4.5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" width="3" height="12" rx="1"/></svg>
+            <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 2.3c2.2 0 4.2.8 5.7 2.2.2.2.5.2.7 0l.9-.9c.2-.2.2-.5 0-.7A10.3 10.3 0 0 0 .7 2.9c-.2.2-.2.5 0 .7l.9.9c.2.2.5.2.7 0A8.2 8.2 0 0 1 8 2.3Zm0 3.4c1.3 0 2.4.4 3.4 1.2.2.2.5.2.7 0l.9-.9c.2-.2.2-.5 0-.7a7 7 0 0 0-10 0c-.2.2-.2.5 0 .7l.9.9c.2.2.5.2.7 0 1-.8 2.1-1.2 3.4-1.2Zm2.2 3.1c.2-.2.2-.5 0-.7a3.3 3.3 0 0 0-4.4 0c-.2.2-.2.5 0 .7l1.9 1.9c.2.2.5.2.7 0l1.8-1.9Z"/></svg>
+            <svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.8" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="20" height="9" rx="2.5"/><path d="M25 4.4v4.2a2.3 2.3 0 0 0 0-4.2Z" opacity=".45"/></svg>
+          </span>
+          <div class="dp-toolbar-top">
+            <span class="dp-tools">
+              <svg width="24" height="24" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+              <svg class="dp-off" width="24" height="24" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+            </span>
+            <span class="dp-top-address">
+              <svg width="18" height="18" viewBox="0 0 24 24"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+              <span class="dp-url"></span>
+              <svg width="18" height="18" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+            </span>
+            <span class="dp-tools">
+              <svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 2v13"/><path d="m16 6-4-4-4 4"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            </span>
+          </div>
+        </div>
+        <div class="dp-safari" aria-hidden="true">
+          <div class="dp-safari-row">
+            <span class="dp-glass dp-round"><svg width="22" height="22" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></span>
+            <span class="dp-glass dp-address">
+              <svg width="18" height="18" viewBox="0 0 24 24"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+              <span class="dp-url"></span>
+              <svg width="18" height="18" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+            </span>
+            <span class="dp-glass dp-round"><svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span>
+          </div>
+          <span class="dp-home"></span>
+        </div>
+
+        <div class="dp-viewport">
         <!-- ───────── Variant A ───────── -->
         <section class="dp-variant" id="v-a" data-name="A · Variant name" role="tabpanel">
           <!-- design markup -->
@@ -112,6 +248,7 @@
         <!-- ───────── Variant C ───────── -->
         <section class="dp-variant" id="v-c" data-name="C · Variant name" role="tabpanel">
         </section>
+        </div>
       </div>
     </div>
 
@@ -152,35 +289,74 @@
     i = (i + variants.length) % variants.length;
     variants.forEach((v, j) => { v.hidden = j !== i; tabs[j].setAttribute('aria-selected', j === i); tabs[j].tabIndex = j === i ? 0 : -1; });
     document.querySelectorAll('.dp-variant-notes').forEach(n => n.hidden = n.dataset.for !== variants[i].id);
+    syncDevice(variants[i]);
     current = i;
     saveHash();
     if (focus) tabs[i].focus();
   }
 
+  // Safari tints the status bar and toolbar with the page colour (its theme-color), and flips their
+  // ink to white on dark pages. Canvas normalises any CSS colour (hex, oklch, …) to RGBA.
+  const frame = document.querySelector('.dp-frame');
+  const viewport = document.querySelector('.dp-viewport');
+  const probe = document.createElement('canvas').getContext('2d');
+  document.querySelectorAll('.dp-url').forEach(u => u.textContent = document.body.dataset.url || 'example.com');
+  // iPadOS shows the date next to the clock, e.g. "Thu Oct 8".
+  document.querySelector('.dp-date').textContent = new Date()
+    .toLocaleDateString(document.documentElement.lang || undefined, { weekday: 'short', month: 'short', day: 'numeric' }).replace(/,/g, '');
+  function syncDevice(v) {
+    probe.clearRect(0, 0, 1, 1);
+    probe.fillStyle = 'transparent'; // an invalid colour below leaves fillStyle unchanged
+    probe.fillStyle = v.dataset.themeColor || getComputedStyle(v).backgroundColor;
+    probe.fillRect(0, 0, 1, 1);
+    const [r, g, b, a] = probe.getImageData(0, 0, 1, 1).data;
+    const theme = a ? `rgb(${r} ${g} ${b})` : '#fff';
+    frame.style.setProperty('--dp-theme', theme);
+    // WCAG relative luminance; below 0.179 white ink has more contrast than black.
+    const lum = [r, g, b].map(c => (c /= 255) <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+    frame.dataset.tone = a && 0.2126 * lum[0] + 0.7152 * lum[1] + 0.0722 * lum[2] < 0.179 ? 'dark' : 'light';
+    viewport.scrollTop = 0;
+  }
+
   function setFrame(f) {
     document.body.dataset.frame = f;
-    document.querySelectorAll('.dp-seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.frame === f));
+    document.querySelectorAll('.dp-seg [data-frame]').forEach(b => b.setAttribute('aria-pressed', b.dataset.frame === f));
     saveHash();
   }
-  document.querySelectorAll('.dp-seg button').forEach(b => b.onclick = () => setFrame(b.dataset.frame));
+  document.querySelectorAll('.dp-seg [data-frame]').forEach(b => b.onclick = () => setFrame(b.dataset.frame));
+
+  const rotate = document.querySelector('.dp-rotate');
+  function setOrientation(o) {
+    document.body.dataset.orientation = o;
+    rotate.setAttribute('aria-pressed', o === 'landscape');
+    saveHash();
+  }
+  const toggleOrientation = () => setOrientation(document.body.dataset.orientation === 'landscape' ? 'portrait' : 'landscape');
+  rotate.onclick = toggleOrientation;
 
   document.addEventListener('keydown', e => {
     if (e.target.closest('input, textarea, select, [contenteditable]') || e.metaKey || e.ctrlKey || e.altKey) return;
     const n = parseInt(e.key, 10);
     if (n >= 1 && n <= variants.length) select(n - 1, false);
+    else if (e.key === 'r' && document.body.dataset.frame !== 'desktop') toggleOrientation();
     else if (e.key === 'ArrowRight' && e.target.closest('.dp-tabs')) select(current + 1, true);
     else if (e.key === 'ArrowLeft' && e.target.closest('.dp-tabs')) select(current - 1, true);
   });
 
   // replaceState throws in sandboxed/srcdoc frames; state persistence is optional there.
-  function saveHash() { try { history.replaceState(null, '', '#' + variants[current].id + '@' + document.body.dataset.frame); } catch {} }
+  function saveHash() {
+    const { frame, orientation } = document.body.dataset;
+    try { history.replaceState(null, '', '#' + variants[current].id + '@' + frame + '@' + orientation); } catch {}
+  }
 
   let current = 0;
-  const [hashId, hashFrame] = location.hash.slice(1).split('@');
+  const [hashId, hashFrame, hashOrientation] = location.hash.slice(1).split('@');
   document.body.dataset.frame = hashFrame || document.body.dataset.defaultFrame || 'desktop';
+  document.body.dataset.orientation = hashOrientation || document.body.dataset.defaultOrientation || 'portrait';
   const start = Math.max(0, variants.findIndex(v => v.id === hashId));
   select(start, false);
   setFrame(document.body.dataset.frame);
+  setOrientation(document.body.dataset.orientation);
 })();
 </script>
 </body>
