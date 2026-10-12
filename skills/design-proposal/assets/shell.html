@@ -1,22 +1,10 @@
-<!doctype html>
 <!--
-  Design proposal shell.
-  - Replace PROPOSAL_TITLE / PROPOSAL_SUBTITLE.
-  - One <section class="dp-variant"> per variant: id="v-a", "v-b", …; data-name is the tab label.
-  - Scope variant CSS under its id (#v-a …). Chrome styles use the .dp- prefix; don't reuse it.
-  - The frame is a size container named "frame": use @container frame (max-width: …) for responsive rules.
-  - <body data-default-frame="mobile"> for mobile-first proposals (desktop | tablet | mobile).
-  - Mobile is an iPhone 15/16 and tablet an iPad Air 11" (portrait), in Safari at their real size; the page
-    scrolls inside the screen. <body data-url="…"> sets the address bar; data-chrome="app" drops Safari for native apps.
-    Rotate (or R) turns the device to landscape; data-default-orientation="landscape" starts there.
-    Safari tints its bars with the variant's background; set data-theme-color on a section to override it.
-    Bars that stick to the screen edge use position: sticky inside the variant, never position: fixed.
+  Design proposal shell. Append it, after the Tailwind runtime, to the proposal's own files; never edit or retype it:
+    cat head.html a.html b.html c.html <skill-dir>/assets/tailwind.html <skill-dir>/assets/shell.html > v1.html
+  It frames every <section class="dp-variant"> (tab label: data-name) and moves the .dp-variant-notes inside
+  each section into the side panel. Header: <title> and <body data-subtitle>. Contract: SKILL.md, step 3.
+  The chrome sets every property it relies on, since Tailwind's preflight resets the defaults.
 -->
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PROPOSAL_TITLE — design proposal</title>
 <style>
   :root {
     --dp-bg: #f4f4f5; --dp-fg: #18181b; --dp-muted: #71717a; --dp-line: #e4e4e7;
@@ -29,7 +17,8 @@
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
-  body { background: var(--dp-bg); color: var(--dp-fg); font: 14px/1.45 var(--dp-font); scrollbar-color: var(--dp-line) transparent; }
+  body { background: var(--dp-bg); color: var(--dp-fg); scrollbar-color: var(--dp-line) transparent; }
+  .dp-header, .dp-notes { font: 14px/1.45 var(--dp-font); }
   .dp-header ::selection, .dp-notes ::selection { background: var(--dp-accent); color: var(--dp-panel); }
 
   .dp-header { position: sticky; top: 0; z-index: 100; background: var(--dp-panel); border-bottom: 1px solid var(--dp-line); }
@@ -97,7 +86,7 @@
   body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-variant { min-height: 100%; }
   body:is([data-frame="mobile"], [data-frame="tablet"]) :is(.dp-statusbar, .dp-safari) {
     position: absolute; z-index: 2; left: 0; right: 0; color: var(--dp-device-fg); pointer-events: none;
-    font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
+    font-family: -apple-system, "SF Pro Text", system-ui, sans-serif; line-height: 1.45;
   }
   body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-statusbar {
     display: grid; align-items: center; top: 0; height: var(--dp-status-h);
@@ -153,28 +142,31 @@
   @media (prefers-reduced-motion: reduce) { .dp-tab:active, .dp-seg button:active { transform: none; } }
 
   .dp-notes { position: sticky; top: 120px; background: var(--dp-panel); border: 1px solid var(--dp-line); border-radius: 12px; padding: 16px; }
-  .dp-notes h2 { font-size: 18px; line-height: 1.3; letter-spacing: -0.01em; margin: 0 0 8px; }
-  .dp-notes h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--dp-muted); margin: 14px 0 4px; }
+  .dp-notes h2 { font-size: 18px; font-weight: 700; line-height: 1.3; letter-spacing: -0.01em; margin: 0 0 8px; }
+  .dp-notes h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--dp-muted); margin: 14px 0 4px; }
   .dp-notes p, .dp-notes ul { margin: 0; }
-  .dp-notes ul { padding-left: 18px; }
+  .dp-notes ul { padding-left: 18px; list-style: disc; }
 
-  .dp-variant[hidden], .dp-variant-notes[hidden] { display: none; }
-
-  /* ───────── Variant styles: scope everything under #v-a, #v-b, … ───────── */
-  #v-a { padding: 32px; }
-  #v-b { padding: 32px; }
-  #v-c { padding: 32px; }
-  @container frame (max-width: 600px) {
-    #v-a, #v-b, #v-c { padding: 16px; }
-  }
+  .dp-variant[hidden], .dp-variant-notes[hidden] { display: none !important; }
 </style>
-</head>
-<body data-default-frame="desktop" data-url="example.com">
+<style type="text/tailwindcss">
+  /* Breakpoints measure the frame, not the browser window, so the frame toggle previews them. */
+  @custom-variant sm (@container frame (width >= 40rem));
+  @custom-variant md (@container frame (width >= 48rem));
+  @custom-variant lg (@container frame (width >= 64rem));
+  @custom-variant xl (@container frame (width >= 80rem));
+  @custom-variant 2xl (@container frame (width >= 96rem));
+  @custom-variant max-sm (@container frame (width < 40rem));
+  @custom-variant max-md (@container frame (width < 48rem));
+  @custom-variant max-lg (@container frame (width < 64rem));
+  @custom-variant max-xl (@container frame (width < 80rem));
+  @custom-variant max-2xl (@container frame (width < 96rem));
+</style>
   <header class="dp-header">
     <div class="dp-header-row">
       <div>
-        <div class="dp-title">PROPOSAL_TITLE</div>
-        <div class="dp-subtitle">PROPOSAL_SUBTITLE</div>
+        <div class="dp-title"></div>
+        <div class="dp-subtitle"></div>
       </div>
       <div class="dp-spacer"></div>
       <div class="dp-seg" role="group" aria-label="Preview size">
@@ -235,44 +227,27 @@
           <span class="dp-home"></span>
         </div>
 
-        <div class="dp-viewport">
-        <!-- ───────── Variant A ───────── -->
-        <section class="dp-variant" id="v-a" data-name="A · Variant name" role="tabpanel">
-          <!-- design markup -->
-        </section>
-
-        <!-- ───────── Variant B ───────── -->
-        <section class="dp-variant" id="v-b" data-name="B · Variant name" role="tabpanel">
-        </section>
-
-        <!-- ───────── Variant C ───────── -->
-        <section class="dp-variant" id="v-c" data-name="C · Variant name" role="tabpanel">
-        </section>
-        </div>
+        <div class="dp-viewport"></div>
       </div>
     </div>
 
-    <aside class="dp-notes" aria-live="polite">
-      <!-- One notes block per variant; data-for must match the section id. -->
-      <div class="dp-variant-notes" data-for="v-a">
-        <h2>A · Variant name</h2>
-        <p>The idea in one sentence.</p>
-        <h3>Best for</h3><p>…</p>
-        <h3>Tradeoffs</h3><ul><li>+ …</li><li>− …</li></ul>
-        <!-- From round 2 on: <h3>Changes</h3><ul><li>…</li></ul> -->
-      </div>
-      <div class="dp-variant-notes" data-for="v-b">
-        <h2>B · Variant name</h2>
-      </div>
-      <div class="dp-variant-notes" data-for="v-c">
-        <h2>C · Variant name</h2>
-      </div>
-    </aside>
+    <aside class="dp-notes" aria-live="polite"></aside>
   </main>
 
 <script>
 (() => {
   const variants = [...document.querySelectorAll('.dp-variant')];
+  const viewport = document.querySelector('.dp-viewport');
+  const panel = document.querySelector('.dp-notes');
+  // The variants come before this shell in the file: move them into the frame and their notes into the panel.
+  variants.forEach(v => {
+    v.role = 'tabpanel';
+    const n = v.querySelector('.dp-variant-notes');
+    if (n) { n.dataset.for = v.id; panel.append(n); }
+  });
+  viewport.append(...variants);
+  document.querySelector('.dp-title').textContent = document.title;
+  document.querySelector('.dp-subtitle').textContent = document.body.dataset.subtitle || '';
   const tablist = document.querySelector('.dp-tabs');
   const tabs = variants.map((v, i) => {
     const b = document.createElement('button');
@@ -298,7 +273,6 @@
   // Safari tints the status bar and toolbar with the page colour (its theme-color), and flips their
   // ink to white on dark pages. Canvas normalises any CSS colour (hex, oklch, …) to RGBA.
   const frame = document.querySelector('.dp-frame');
-  const viewport = document.querySelector('.dp-viewport');
   const probe = document.createElement('canvas').getContext('2d');
   document.querySelectorAll('.dp-url').forEach(u => u.textContent = document.body.dataset.url || 'example.com');
   // iPadOS shows the date next to the clock, e.g. "Thu Oct 8".
@@ -350,13 +324,17 @@
   }
 
   let current = 0;
-  const [hashId, hashFrame, hashOrientation] = location.hash.slice(1).split('@');
-  document.body.dataset.frame = hashFrame || document.body.dataset.defaultFrame || 'desktop';
-  document.body.dataset.orientation = hashOrientation || document.body.dataset.defaultOrientation || 'portrait';
-  const start = Math.max(0, variants.findIndex(v => v.id === hashId));
-  select(start, false);
-  setFrame(document.body.dataset.frame);
-  setOrientation(document.body.dataset.orientation);
+  // On load, and when a tab already showing the file navigates to another hash (v1.html#v-b@mobile).
+  function fromHash() {
+    const [id, frame, orientation] = location.hash.slice(1).split('@');
+    document.body.dataset.frame = frame || document.body.dataset.defaultFrame || 'desktop';
+    document.body.dataset.orientation = orientation || document.body.dataset.defaultOrientation || 'portrait';
+    select(Math.max(0, variants.findIndex(v => v.id === id)), false);
+    setFrame(document.body.dataset.frame);
+    setOrientation(document.body.dataset.orientation);
+  }
+  addEventListener('hashchange', fromHash);
+  fromHash();
 })();
 </script>
 </body>
