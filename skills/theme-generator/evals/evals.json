@@ -1,0 +1,50 @@
+{
+  "skill_name": "theme-generator",
+  "evals": [
+    {
+      "id": 1,
+      "name": "shadcn-evolve-existing",
+      "prompt": "Il tema del mio progetto shadcn (evals/files/globals.css) è tutto grigio. Voglio un primary verde petrolio e titoli più eleganti, ma i neutri devono restare sobri. Fammi vedere qualche alternativa.",
+      "expected_output": "shadcn mode without asking (components/tokens are shadcn), 2–3 candidates with a teal primary that differ in neutrals, radius or heading font; preview.html with light and dark samples; every text pair passes AA; ends asking which candidate. Nothing is written to globals.css before the choice.",
+      "files": [
+        "evals/files/globals.css"
+      ],
+      "assertions": [
+        "uses_bundled_script",
+        "two_or_three_distinct_candidates",
+        "preview_light_and_dark",
+        "text_pairs_pass_aa",
+        "asks_before_applying",
+        "project_css_untouched_before_choice"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "tailwind-brand-color",
+      "prompt": "Brand color #e85d04 per un'app di food delivery. Mi servono le palette Tailwind (brand e neutri) e un font con carattere, niente shadcn.",
+      "expected_output": "Tailwind mode: @theme with --color-brand-50…950 holding #e85d04 at its step, a neutral choice, --font-sans (and heading if used), radius scale; preview with 2–3 candidates; asks which one.",
+      "files": [],
+      "assertions": [
+        "uses_bundled_script",
+        "tailwind_theme_block",
+        "seed_exact_in_scale",
+        "two_or_three_distinct_candidates",
+        "asks_before_applying"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "url-inspired",
+      "prompt": "Make me a theme inspired by https://linear.app for my analytics dashboard.",
+      "expected_output": "Asks Tailwind or shadcn first (no project context), extracts colours from the URL with the script instead of guessing, builds 2–3 candidates and a preview, explains how each relates to the source.",
+      "files": [],
+      "assertions": [
+        "asks_mode_when_unspecified",
+        "extracts_from_url",
+        "two_or_three_distinct_candidates",
+        "preview_light_and_dark",
+        "asks_before_applying"
+      ]
+    }
+  ]
+}

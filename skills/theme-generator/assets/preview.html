@@ -1,0 +1,166 @@
+<!doctype html>
+<!-- Theme preview. scripts/theme.py fills THEMES and the font links; don't edit a generated copy. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Theme preview</title>
+<!--FONTS-->
+<style>
+  :root { --c-bg: #f4f4f5; --c-fg: #18181b; --c-muted: #71717a; --c-line: #e4e4e7; --c-panel: #fff; color-scheme: light dark; }
+  @media (prefers-color-scheme: dark) { :root { --c-bg: #0f0f11; --c-fg: #f4f4f5; --c-muted: #a1a1aa; --c-line: #27272a; --c-panel: #18181b; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--c-bg); color: var(--c-fg); font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif; }
+  header { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 16px; padding: 0 20px; background: var(--c-panel); border-bottom: 1px solid var(--c-line); }
+  header b { font-size: 15px; padding: 14px 0; }
+  .tabs { display: flex; gap: 4px; overflow-x: auto; }
+  .tabs button { font: inherit; color: var(--c-muted); background: none; border: 0; border-bottom: 2px solid transparent; padding: 14px 12px 12px; cursor: pointer; white-space: nowrap; }
+  .tabs button[aria-selected="true"] { color: var(--c-fg); border-bottom-color: var(--c-fg); font-weight: 600; }
+  .tabs kbd { font: 11px inherit; border: 1px solid var(--c-line); border-radius: 4px; padding: 0 4px; margin-right: 6px; }
+  .mode { margin-left: auto; color: var(--c-muted); }
+  main { padding: 20px; display: grid; gap: 28px; }
+  section[hidden] { display: none; }
+  .note { margin: 0; color: var(--c-muted); max-width: 75ch; }
+  h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--c-muted); margin: 0 0 10px; }
+  .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(560px, 1fr)); gap: 16px; }
+  .pair > div > span { display: block; margin-bottom: 6px; color: var(--c-muted); font-size: 12px; }
+  .strip { display: grid; grid-template-columns: 90px repeat(11, minmax(0, 1fr)); gap: 4px; align-items: stretch; margin-bottom: 6px; }
+  .strip > b { align-self: center; font-weight: 500; }
+  .sw { height: 56px; border-radius: 6px; padding: 5px 6px; display: flex; flex-direction: column; justify-content: space-between; font-size: 11px; line-height: 1.2; }
+  .sw i { font-style: normal; font-weight: 600; }
+  table.rep { border-collapse: collapse; font-size: 13px; }
+  .rep td, .rep th { text-align: left; padding: 4px 14px 4px 0; border-bottom: 1px solid var(--c-line); }
+  .rep .bad { color: #dc2626; font-weight: 600; }
+  pre { margin: 0; padding: 14px; background: var(--c-panel); border: 1px solid var(--c-line); border-radius: 10px; overflow: auto; max-height: 360px; font: 12px/1.5 ui-monospace, Menlo, monospace; }
+  .copy { font: inherit; margin-bottom: 8px; padding: 4px 10px; border: 1px solid var(--c-line); border-radius: 6px; background: var(--c-panel); color: var(--c-fg); cursor: pointer; }
+
+  /* ── sampler: every colour, radius and font comes from the candidate's tokens ── */
+  .s { display: grid; grid-template-columns: 170px 1fr; min-height: 560px; overflow: hidden; border-radius: 12px; border: 1px solid var(--c-line);
+       background: var(--background); color: var(--foreground); font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif); font-size: 14px; }
+  .s * { border-color: var(--border); }
+  .s ::selection { background: var(--primary); color: var(--primary-foreground); }
+  .s-side { background: var(--sidebar); color: var(--sidebar-foreground); border-right: 1px solid var(--sidebar-border); padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; }
+  .s-brand { display: flex; align-items: center; gap: 8px; font-weight: 600; padding: 4px 8px 12px; }
+  .s-logo { width: 22px; height: 22px; border-radius: calc(var(--radius) * 0.8); background: var(--sidebar-primary); }
+  .s-nav { padding: 6px 8px; border-radius: calc(var(--radius) * 0.8); color: inherit; text-decoration: none; }
+  .s-nav.on { background: var(--sidebar-accent); color: var(--sidebar-accent-foreground); font-weight: 500; }
+  .s-main { padding: 20px; display: grid; gap: 16px; align-content: start; min-width: 0; }
+  .s-h { font-family: var(--font-heading, var(--font-sans)); font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+  .s-p { margin: -10px 0 0; color: var(--muted-foreground); }
+  .s-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .btn { height: 34px; padding: 0 14px; border-radius: calc(var(--radius) * 0.8); border: 1px solid transparent; font: 500 13px var(--font-sans, system-ui); cursor: pointer; }
+  .btn-p { background: var(--primary); color: var(--primary-foreground); }
+  .btn-s { background: var(--secondary); color: var(--secondary-foreground); }
+  .btn-o { background: var(--background); color: var(--foreground); border-color: var(--input); }
+  .btn-g { background: transparent; color: var(--foreground); }
+  .btn-g:hover, .btn-o:hover { background: var(--accent); color: var(--accent-foreground); }
+  .btn-d { background: var(--destructive); color: #fff; }
+  .s-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .s-card { background: var(--card); color: var(--card-foreground); border: 1px solid var(--border); border-radius: calc(var(--radius) * 1.4); padding: 14px; display: grid; gap: 10px; align-content: start; }
+  .s-card b { font-family: var(--font-heading, var(--font-sans)); font-weight: 600; }
+  .s-card small { color: var(--muted-foreground); font-size: 12px; margin-top: -8px; }
+  .s-label { font-size: 12px; font-weight: 500; }
+  .s-input { height: 34px; border: 1px solid var(--input); border-radius: calc(var(--radius) * 0.8); padding: 0 10px; display: flex; align-items: center; color: var(--muted-foreground); }
+  .s-input.focus { color: var(--foreground); border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 40%, transparent); }
+  .s-check { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .s-box { width: 16px; height: 16px; border-radius: 4px; background: var(--primary); color: var(--primary-foreground); display: grid; place-items: center; font-size: 11px; }
+  .s-switch { margin-left: auto; width: 34px; height: 20px; border-radius: 99px; background: var(--primary); position: relative; }
+  .s-switch::after { content: ""; position: absolute; right: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--primary-foreground); }
+  .s-bars { display: flex; align-items: end; gap: 8px; height: 92px; padding-top: 6px; }
+  .s-bars i { flex: 1; border-radius: calc(var(--radius) * 0.6) calc(var(--radius) * 0.6) 0 0; }
+  .badge { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 99px; font-size: 12px; font-weight: 500; border: 1px solid transparent; }
+  .b-p { background: var(--primary); color: var(--primary-foreground); }
+  .b-s { background: var(--secondary); color: var(--secondary-foreground); }
+  .b-o { border-color: var(--border); color: var(--foreground); }
+  .b-d { background: color-mix(in oklch, var(--destructive) 12%, transparent); color: var(--destructive); }
+  .s-alert { border: 1px solid var(--border); border-radius: calc(var(--radius) * 1.4); padding: 12px 14px; background: var(--card); }
+  .s-alert b { display: block; font-weight: 600; }
+  .s-alert span { color: var(--muted-foreground); }
+  .s-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .s-table th { text-align: left; font-weight: 500; color: var(--muted-foreground); padding: 8px 8px; border-bottom: 1px solid var(--border); }
+  .s-table td { padding: 8px 8px; border-bottom: 1px solid var(--border); }
+  .s-table tr:hover td { background: color-mix(in oklch, var(--muted) 50%, transparent); }
+  .s-table td:last-child, .s-table th:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .s-tabs { display: inline-flex; padding: 3px; gap: 2px; background: var(--muted); color: var(--muted-foreground); border-radius: calc(var(--radius) * 1); width: fit-content; }
+  .s-tabs span { padding: 4px 10px; border-radius: calc(var(--radius) * 0.8); font-size: 13px; }
+  .s-tabs .on { background: var(--background); color: var(--foreground); box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+  .s-link { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+  .s-code { font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; background: var(--muted); color: var(--foreground); padding: 2px 6px; border-radius: 4px; }
+  @media (max-width: 700px) { .s { grid-template-columns: 1fr; } .s-side { display: none; } .s-grid { grid-template-columns: 1fr; } .strip { grid-template-columns: repeat(6, minmax(0, 1fr)); } .strip > b { grid-column: 1 / -1; } }
+</style>
+</head>
+<body>
+<header><b>Theme preview</b><nav class="tabs" role="tablist"></nav><span class="mode"></span></header>
+<main></main>
+
+<template id="sampler">
+  <div class="s">
+    <aside class="s-side"><div class="s-brand"><span class="s-logo"></span>Northwind</div>
+      <a class="s-nav on" href="#">Dashboard</a><a class="s-nav" href="#">Invoices</a><a class="s-nav" href="#">Customers</a><a class="s-nav" href="#">Settings</a></aside>
+    <div class="s-main">
+      <h2 class="s-h">Quarterly overview</h2>
+      <p class="s-p">Revenue is up 12.4% on last quarter; three invoices are overdue. <span class="s-link">View report</span></p>
+      <div class="s-row"><button class="btn btn-p">Send invoice</button><button class="btn btn-s">Duplicate</button><button class="btn btn-o">Export</button><button class="btn btn-g">Cancel</button><button class="btn btn-d">Delete</button></div>
+      <div class="s-grid">
+        <div class="s-card"><b>Billing contact</b><small>Where receipts are sent.</small>
+          <span class="s-label">Email</span><span class="s-input focus">marta.rossi@northwind.io</span>
+          <span class="s-input">VAT number</span>
+          <span class="s-check"><span class="s-box">✓</span>Send monthly statements<span class="s-switch" aria-hidden="true"></span></span></div>
+        <div class="s-card"><b>Revenue by region</b><small>Last 30 days</small>
+          <div class="s-bars"><i style="height:92%;background:var(--chart-1)"></i><i style="height:70%;background:var(--chart-2)"></i><i style="height:55%;background:var(--chart-3)"></i><i style="height:38%;background:var(--chart-4)"></i><i style="height:24%;background:var(--chart-5)"></i></div>
+          <div class="s-row"><span class="badge b-p">Paid</span><span class="badge b-s">Draft</span><span class="badge b-o">Archived</span><span class="badge b-d">Overdue</span></div></div>
+      </div>
+      <div class="s-alert"><b>Payout scheduled</b><span>€18,420.00 will reach your account on 14 October. Run <span class="s-code">invoices sync</span> to refresh.</span></div>
+      <span class="s-tabs"><span class="on">Overview</span><span>Analytics</span><span>Reports</span></span>
+      <table class="s-table"><thead><tr><th>Invoice</th><th>Customer</th><th>Amount</th></tr></thead>
+        <tbody><tr><td>INV-2041</td><td>Bellini & Co.</td><td>€2,300.00</td></tr><tr><td>INV-2040</td><td>Studio Ferri</td><td>€840.50</td></tr><tr><td>INV-2039</td><td>Marlowe Ltd</td><td>€12,000.00</td></tr></tbody></table>
+    </div>
+  </div>
+</template>
+
+<script>
+const THEMES = /*THEMES*/[];
+const tabs = document.querySelector('.tabs'), main = document.querySelector('main'), sampler = document.getElementById('sampler');
+const el = (tag, props = {}, ...kids) => Object.assign(document.createElement(tag), props).appendChildren(kids);
+Element.prototype.appendChildren = function (kids) { kids.flat().forEach(k => k != null && this.append(k)); return this; };
+
+function paint(node, tokens, theme) {
+  for (const [k, v] of Object.entries(tokens)) node.style.setProperty('--' + k, v);
+  node.style.setProperty('--radius', theme.radius);
+  for (const [role, v] of Object.entries(theme.fonts)) node.style.setProperty('--font-' + role, v);
+}
+
+const sections = THEMES.map((t, i) => {
+  const pair = el('div', { className: 'pair' }, ['light', 'dark'].map(mode => {
+    const s = sampler.content.firstElementChild.cloneNode(true);
+    paint(s, t[mode], t);
+    return el('div', {}, el('span', { textContent: mode === 'light' ? 'Light' : 'Dark' }), s);
+  }));
+  const strips = t.palettes.map(p => el('div', { className: 'strip' }, el('b', { textContent: p.name }), p.steps.map(s => {
+    const onWhite = s.white >= s.black;
+    return el('div', { className: 'sw', title: `${p.name}-${s.step}  ${s.css}  ${s.hex}`, style: `background:${s.css};color:${onWhite ? '#fff' : '#000'}` },
+      el('i', { textContent: s.step }), el('span', { textContent: `${Math.max(s.white, s.black)}:1` }));
+  })));
+  const fails = t.report.filter(r => r.ratio < r.min);
+  const rep = el('table', { className: 'rep' }, el('tr', {}, ['Mode', 'Pair', 'Ratio', 'Min'].map(h => el('th', { textContent: h }))),
+    t.report.map(r => el('tr', {}, el('td', { textContent: r.mode }), el('td', { textContent: r.pair }),
+      el('td', { textContent: r.ratio + ':1', className: r.ratio < r.min ? 'bad' : '' }), el('td', { textContent: r.min + ':1' }))));
+  const copy = el('button', { className: 'copy', textContent: 'Copy CSS', onclick: () => navigator.clipboard.writeText(t.css).then(() => { copy.textContent = 'Copied'; }) });
+  return el('section', { role: 'tabpanel', hidden: true },
+    el('p', { className: 'note', textContent: t.note }), pair,
+    el('div', {}, el('h3', { textContent: 'Palettes' }), strips),
+    el('details', { open: fails.length > 0 }, el('summary', {}, el('h3', { style: 'display:inline', textContent: fails.length ? `Contrast: ${fails.length} pair(s) below WCAG AA` : 'Contrast: every pair passes WCAG AA' })), rep),
+    el('div', {}, el('h3', { textContent: `CSS (${t.mode})` }), copy, el('pre', { textContent: t.css })));
+});
+main.append(...sections);
+const buttons = THEMES.map((t, i) => tabs.appendChild(el('button', { role: 'tab', onclick: () => select(i) }, el('kbd', { textContent: i + 1 }), t.name)));
+function select(i) {
+  sections.forEach((s, j) => { s.hidden = j !== i; buttons[j].setAttribute('aria-selected', j === i); });
+  document.querySelector('.mode').textContent = THEMES[i].mode === 'shadcn' ? 'shadcn tokens' : 'Tailwind @theme';
+  try { history.replaceState(null, '', '#' + (i + 1)); } catch {}
+}
+addEventListener('keydown', e => { const n = parseInt(e.key, 10); if (n >= 1 && n <= THEMES.length) select(n - 1); });
+select(Math.min(Math.max(parseInt(location.hash.slice(1), 10) || 1, 1), THEMES.length) - 1);
+</script>
+</body>
+</html>
