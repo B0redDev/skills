@@ -72,9 +72,10 @@
   .b-p { background: var(--primary); color: var(--primary-foreground); }
   .b-s { background: var(--secondary); color: var(--secondary-foreground); }
   .b-o { border-color: var(--border); color: var(--foreground); }
-  .b-d { background: color-mix(in oklch, var(--destructive) 12%, transparent); color: var(--destructive); }
-  .s-alert { border: 1px solid var(--border); border-radius: calc(var(--radius) * 1.4); padding: 12px 14px; background: var(--card); }
-  .s-alert b { display: block; font-weight: 600; }
+  .b-st { background: color-mix(in srgb, var(--st) 10%, transparent); color: var(--st); }
+  .s-alerts { display: grid; gap: 8px; }
+  .s-alert { border: 1px solid color-mix(in oklab, var(--st) 35%, var(--border)); border-radius: calc(var(--radius) * 1.4); padding: 12px 14px; background: var(--card); }
+  .s-alert b { display: block; font-weight: 600; color: var(--st); }
   .s-alert span { color: var(--muted-foreground); }
   .s-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .s-table th { text-align: left; font-weight: 500; color: var(--muted-foreground); padding: 8px 8px; border-bottom: 1px solid var(--border); }
@@ -108,9 +109,13 @@
           <span class="s-check"><span class="s-box">✓</span>Send monthly statements<span class="s-switch" aria-hidden="true"></span></span></div>
         <div class="s-card"><b>Revenue by region</b><small>Last 30 days</small>
           <div class="s-bars"><i style="height:92%;background:var(--chart-1)"></i><i style="height:70%;background:var(--chart-2)"></i><i style="height:55%;background:var(--chart-3)"></i><i style="height:38%;background:var(--chart-4)"></i><i style="height:24%;background:var(--chart-5)"></i></div>
-          <div class="s-row"><span class="badge b-p">Paid</span><span class="badge b-s">Draft</span><span class="badge b-o">Archived</span><span class="badge b-d">Overdue</span></div></div>
+          <div class="s-row"><span class="badge b-p">New</span><span class="badge b-st" style="--st:var(--success)">Paid</span><span class="badge b-st" style="--st:var(--warning)">Due soon</span><span class="badge b-st" style="--st:var(--destructive)">Overdue</span><span class="badge b-s">Draft</span><span class="badge b-o">Archived</span></div></div>
       </div>
-      <div class="s-alert"><b>Payout scheduled</b><span>€18,420.00 will reach your account on 14 October. Run <span class="s-code">invoices sync</span> to refresh.</span></div>
+      <div class="s-alerts">
+        <div class="s-alert" style="--st:var(--info)"><b>Payout scheduled</b><span>€18,420.00 will reach your account on 14 October. Run <span class="s-code">invoices sync</span> to refresh.</span></div>
+        <div class="s-alert" style="--st:var(--warning)"><b>Card expires in 5 days</b><span>Update the payment method to keep invoices going out.</span></div>
+        <div class="s-alert" style="--st:var(--success)"><b>Statements sent</b><span>42 customers received their September statement.</span></div>
+      </div>
       <span class="s-tabs"><span class="on">Overview</span><span>Analytics</span><span>Reports</span></span>
       <table class="s-table"><thead><tr><th>Invoice</th><th>Customer</th><th>Amount</th></tr></thead>
         <tbody><tr><td>INV-2041</td><td>Bellini & Co.</td><td>€2,300.00</td></tr><tr><td>INV-2040</td><td>Studio Ferri</td><td>€840.50</td></tr><tr><td>INV-2039</td><td>Marlowe Ltd</td><td>€12,000.00</td></tr></tbody></table>

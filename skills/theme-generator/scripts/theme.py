@@ -30,6 +30,11 @@ PALETTES = {k: [tuple(c) for c in v] for k, v in REF["palettes"].items()}
 GRAYS = ("slate", "gray", "zinc", "neutral", "stone", "mauve", "olive", "mist", "taupe")
 WHITE = (1.0, 0.0, 0.0)
 RED_LIGHT, RED_DARK = (0.577, 0.245, 27.325), (0.704, 0.191, 22.216)  # shadcn's destructive
+# Status colours, used as text like destructive. Light mode: one hue and chroma each, at the lightest lightness that
+# still reads as text, so the three match (Tailwind's text steps don't: green/yellow-800 are muddy, blue-700 twice as
+# saturated). Warning is burnt orange: a yellow dark enough for text on white is always brown.
+# Dark mode: Tailwind's 400s already match.
+STATUS = {"success": (150, 0.12, "green"), "warning": (45, 0.15, "yellow"), "info": (250, 0.12, "blue")}
 STACKS = {
     "sans": "ui-sans-serif, system-ui, sans-serif",
     "serif": "ui-serif, Georgia, serif",
@@ -101,6 +106,13 @@ def luminance(c):
 def contrast(c1, c2):
     hi, lo = sorted((luminance(c1), luminance(c2)), reverse=True)
     return (hi + 0.05) / (lo + 0.05)
+
+
+def over(c, bg, alpha):
+    """c at alpha over bg, composited in gamma-encoded sRGB as browsers do (Tailwind's bg-x/10)."""
+    enc = [[12.92 * v if v <= 0.0031308 else 1.055 * v ** (1 / 2.4) - 0.055 for v in (min(max(x, 0.0), 1.0) for x in to_linear(k))]
+           for k in (c, bg)]
+    return from_srgb(*(alpha * a + (1 - alpha) * b for a, b in zip(*enc)))
 
 
 def to_hex(c):
@@ -257,9 +269,35 @@ def semantic(cand, brand, anchor, neutral, accent):
     for tokens, chart in ((light, charts[0]), (dark, charts[1])):
         tokens.update({f"chart-{i + 1}": c for i, c in enumerate(chart)})
     for mode, tokens in (("light", light), ("dark", dark)):
-        for k, v in (cand.get("overrides") or {}).get(mode, {}).items():
+        ov = (cand.get("overrides") or {}).get(mode, {})
+        for k, v in ov.items():
             tokens[k] = v if "/" in v or "var(" in v else parse(v)
+        # after the overrides, so the status colours read on the background the candidate ends up with
+        tokens.update({k: c for k, (_, c) in status(tokens, mode).items() if k not in ov})
     return light, dark
+
+
+def status_grounds(tokens, c):
+    """Where status text c sits: background and card, plain and under its own 10% tint (bg-warning/10 badges)."""
+    plain = [(k, tokens[k]) for k in ("background", "card") if isinstance(tokens.get(k), tuple)]
+    return plain + [(f"{k} + 10% tint", over(c, bg, 0.1)) for k, bg in plain]
+
+
+def status(tokens, mode):
+    """Each status colour, reading as text (4.5:1) on all its grounds. Light: the lightest one at its hue and chroma;
+    dark: its palette from 400 lighter. Returns {name: (label, colour)}, the label a Tailwind step in dark mode."""
+    out = {}
+    for name, (hue, chroma, pal) in STATUS.items():
+        def ok(c):
+            return all(contrast(c, bg) >= 4.5 for _, bg in status_grounds(tokens, c))
+        if mode == "light":  # parse(fmt()) so the check holds for the rounded value the CSS gets
+            c = next((c for c in (parse(fmt(gamut((i / 200, chroma, hue)))) for i in range(160, 0, -1)) if ok(c)), (0.0, 0.0, 0.0))
+            out[name] = (fmt(c), c)
+        else:
+            p = dict(zip(STEPS, PALETTES[pal]))
+            step = next((s for s in STEPS[4::-1] if ok(p[s])), "50")
+            out[name] = (f"{pal}-{step}", p[step])
+    return out
 
 
 def report(light, dark):
@@ -268,6 +306,10 @@ def report(light, dark):
         for fg_, bg in TEXT_PAIRS:
             if isinstance(t.get(fg_), tuple) and isinstance(t.get(bg), tuple):
                 rows.append({"mode": mode, "pair": f"{fg_} / {bg}", "ratio": round(contrast(t[fg_], t[bg]), 2), "min": 4.5})
+        for name in STATUS:
+            if isinstance(t.get(name), tuple):
+                rows += [{"mode": mode, "pair": f"{name} / {label}", "ratio": round(contrast(t[name], bg), 2), "min": 4.5}
+                         for label, bg in status_grounds(t, t[name])]
         if isinstance(t["primary"], tuple):
             rows.append({"mode": mode, "pair": "primary / background (non-text)",
                          "ratio": round(contrast(t["primary"], t["background"]), 2), "min": 3})
@@ -289,6 +331,7 @@ def tailwind_decls(cand, r):
     """@theme declarations: every palette (the chosen gray as --color-neutral-*), fonts, the radius scale."""
     decls = {f"color-{name}-{s}": fmt(c) for name, p in r["palettes"].items() for s, c in zip(STEPS, p)}
     decls.update({f"font-{role}": v for role, v in r["fonts"].items()})
+    decls.update({f"color-{name}": fmt(r["light"][name]) for name in STATUS})  # dark mode: the 400s the build prints
     if cand.get("radius") is not None:
         decls.update({f"radius-{k}": f"{round(v * cand['radius'] / 0.5, 4):g}rem" for k, v in TW_RADIUS.items()})
     return decls
@@ -357,6 +400,8 @@ def build(args):
             white = next((s for s, c in zip(STEPS, p) if contrast(c, WHITE) >= 4.5), None)
             black = next((s for s, c in reversed(list(zip(STEPS, p))) if contrast(c, (0.0, 0.0, 0.0)) >= 4.5), None)
             log.append(f"  {name}: white text passes AA from {white or 'no step'}, black text up to {black or 'no step'}")
+        if mode == "tailwind":  # @theme has the light status colours; dark mode takes stock steps
+            log.append("  status text in dark mode: " + ", ".join(f"dark:text-{s} for {k}" for k, (s, _) in status(r["dark"], "dark").items()))
     links = "\n".join(
         f'<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={urllib.parse.quote_plus(f)}:wght@400..700&display=swap"'
         ' onerror="this.onerror=null; this.href=this.href.replace(/:wght@[^&]*/, \'\')">'  # static families: plain request
@@ -383,25 +428,27 @@ def _blocks(css, selector):
 
 
 def _set(css, selector, decls, prefer=None, create=None):
-    """Set each --name: value inside the first block matching selector (one containing `prefer` if any)."""
+    """Set each --name: value in every block matching selector that declares it (so a later block can't shadow it);
+    add the undeclared ones to the first block (the first containing `prefer`, if any)."""
     if not decls:
         return css
-    found = list(_blocks(css, selector))
-    found = [b for b in found if prefer and prefer in css[b[0]:b[1]]] or found
-    if not found:
+    blocks = list(_blocks(css, selector))
+    if not blocks:
         body = "".join(f"  --{k}: {v};\n" for k, v in decls.items())
         return create(css, body) if create else css + f"\n{selector_text(selector)} {{\n{body}}}\n"
-    s, e = found[0]
-    body = css[s:e]
-    indent = (re.search(r"\n([ \t]+)--", body) or [None, "  "])[1]
-    for k, v in decls.items():
-        pat = re.compile(rf"(--{re.escape(k)}\s*:\s*)[^;]*;")
-        if pat.search(body):
-            body = pat.sub(lambda m: f"{m[1]}{v};", body)
-        else:
+    home = next((b for b in blocks if prefer and prefer in css[b[0]:b[1]]), blocks[0])
+    pats = {k: re.compile(rf"(--{re.escape(k)}\s*:\s*)[^;]*;") for k in decls}
+    missing = [k for k in decls if not any(pats[k].search(css[s:e]) for s, e in blocks)]
+    for s, e in reversed(blocks):  # back to front, so earlier offsets stay valid
+        body = css[s:e]
+        for k, v in decls.items():
+            body = pats[k].sub(lambda m, v=v: f"{m[1]}{v};", body)
+        if (s, e) == home and missing:
+            indent = (re.search(r"\n([ \t]+)--", body) or [None, "  "])[1]
             body = body.rstrip(" \t")
-            body += ("" if body.endswith("\n") else "\n") + f"{indent}--{k}: {v};\n"
-    return css[:s] + body + css[e:]
+            body += ("" if body.endswith("\n") else "\n") + "".join(f"{indent}--{k}: {decls[k]};\n" for k in missing)
+        css = css[:s] + body + css[e:]
+    return css
 
 
 def selector_text(selector):
@@ -437,8 +484,8 @@ def apply(args):
         css = _set(css, r"(?m)^[ \t]*:root\s*\{", root, prefer="--background")
         css = _set(css, r"(?m)^[ \t]*\.dark\s*\{", {k: fmt(v) for k, v in r["dark"].items()}, prefer="--background")
         target = r"@theme\s+inline\s*\{" if re.search(r"@theme\s+inline\s*\{", css) else r"@theme\s*\{"
-        fonts = {f"font-{k}": v for k, v in r["fonts"].items()}
-        css = _set(css, target, fonts, create=_after_imports(selector_text(target)))
+        inline = {**{f"font-{k}": v for k, v in r["fonts"].items()}, **{f"color-{k}": f"var(--{k})" for k in STATUS}}
+        css = _set(css, target, inline, create=_after_imports(selector_text(target)))
     else:
         css = _set(css, r"@theme\s*\{", tailwind_decls(pick, r), create=_after_imports("@theme"))
     if args.dry_run:

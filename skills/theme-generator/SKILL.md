@@ -20,7 +20,7 @@ Ask only what the user's message doesn't already answer, in one batched question
 
 ## 2. Gather
 
-- **Project**: find the main CSS file. `npx shadcn@latest info`, run where `components.json` is (the app's folder in a monorepo), reports it as `tailwindCss`; without shadcn it's the file with `@import "tailwindcss"`. Read it: current tokens, how fonts are loaded (`@fontsource` imports in CSS, or `next/font` variables), and tokens beyond shadcn's set (e.g. ReUI's `--success`, `--warning`, `--info`). Those extras are left untouched.
+- **Project**: find the main CSS file. `npx shadcn@latest info`, run where `components.json` is (the app's folder in a monorepo), reports it as `tailwindCss`; without shadcn it's the file with `@import "tailwindcss"`. Read it: current tokens, how fonts are loaded (`@fontsource` imports in CSS, or `next/font` variables), and tokens beyond shadcn's set. The generator also writes `--success`, `--warning` and `--info`; check how the project uses them (below). Other extras (`--success-soft`, ReUI's `--*-foreground` pairs, …) are left untouched.
 - **Brand colour**: any CSS colour or a Tailwind name (`amber-500`). `python3 <skill-dir>/scripts/theme.py palette <colour>` prints its scale with contrast against white and black.
 - **Image or URL**: `python3 <skill-dir>/scripts/theme.py extract <path-or-url>` returns the dominant chromatic and neutral colours as OKLCH (for a URL: from its CSS, plus `theme-color` and colour-named custom properties). Pick the brand colour from those; don't eyeball a screenshot when exact values are available.
 - **Description**: translate it into a seed colour, a neutral family, a radius and fonts, and say how in the notes.
@@ -58,6 +58,8 @@ Candidates must differ in ways the user can judge: neutral temperature, radius, 
 
 The mapping follows shadcn's own themes: white background, neutral steps for surfaces and borders, the brand as `primary` and `ring`, a dark mode that keeps the brand unless it falls below 3:1 on the dark background, and foregrounds chosen to reach 4.5:1. shadcn's stock `muted-foreground` is 4.3:1 on `muted`; the generator darkens it just enough to pass.
 
+Status colours work like shadcn's `destructive`: a text colour, also used as its own tint (`text-warning bg-warning/10`). Each must reach 4.5:1 on background and card, with and without that 10% tint. In light mode Tailwind's text steps don't match each other (green-800 and yellow-800 look muddy, blue-700 is twice as saturated), so the generator keeps one hue and chroma per status (green 150, burnt orange 45, blue 250; chroma 0.12–0.15) at the lightest lightness that passes. Warning is orange because any yellow dark enough for text on white turns brown. In dark mode the Tailwind 400s (green, yellow, blue) already match. They are chosen after the overrides, so they follow an overridden background. If the project already tuned them, or uses them as fills with a `-foreground` pair, put its values in `overrides` so the preview shows them and `apply` keeps them. A brand close to a status hue (a green primary, an orange one) makes states ambiguous: say so in the note.
+
 ## 4. Build and show
 
 ```bash
@@ -67,11 +69,11 @@ python3 <skill-dir>/scripts/theme.py build "$dir/spec.json" --out "$dir"
 open "$dir/preview.html"        # macOS; xdg-open on Linux, start "" on Windows
 ```
 
-`build` writes one standalone CSS file per candidate and `preview.html`. The preview has a tab per candidate (keys 1–9), with a sample app in light and dark, the palettes, the contrast report and the CSS. Fonts load from Google Fonts for the preview only.
+`build` writes one standalone CSS file per candidate and `preview.html`. The preview has a tab per candidate (keys 1–9), with a sample app in light and dark (buttons, inputs, status badges and success/warning/info alerts), the palettes, the contrast report and the CSS. Fonts load from Google Fonts for the preview only.
 
 The script prints every pair below WCAG AA. Text pairs pass unless an override broke them; fix those before showing anything. A non-text warning on `primary / background` means the brand is light (yellow, lime): fine for filled buttons, but text or icons in the primary colour will be hard to read. Tell the user rather than silently darkening their brand.
 
-The contrast report checks the shadcn mapping, which picks each foreground for its background. Tailwind users pick text colours themselves, so `build` also prints, per palette, the first step that takes white text and the last that takes black text at AA. Pass that on: "`text-white` from `brand-700`" prevents `text-white bg-brand-600` at 3.5:1.
+The contrast report checks the shadcn mapping, which picks each foreground for its background, and the status colours on their grounds. Tailwind users pick text colours themselves, so `build` also prints, per palette, the first step that takes white text and the last that takes black text at AA. Pass that on: "`text-white` from `brand-700`" prevents `text-white bg-brand-600` at 3.5:1. In Tailwind mode the light status colours land in `@theme` as `--color-success`/`-warning`/`-info`; `build` prints the dark-mode steps to pair with them (`text-warning dark:text-yellow-400`).
 
 Tell the user the preview path, give your recommendation, and **end with a question**: which candidate, and what to change. To iterate, edit `spec.json` and rebuild; it takes a second.
 
@@ -86,7 +88,7 @@ python3 <skill-dir>/scripts/theme.py apply "$dir/spec.json" --pick A --css <proj
 
 `apply` rewrites the values of the tokens it generates where they already are, adds the missing ones to the same block, and leaves every other rule and token alone.
 
-- *shadcn*: `:root` and `.dark` get the tokens and `--radius`; fonts go in `@theme inline`.
+- *shadcn*: `:root` and `.dark` get the tokens and `--radius`; fonts and the `--color-success`/`-warning`/`-info` mappings go in `@theme inline`. A token already declared in a later block of the same selector is rewritten there, so nothing shadows it.
 - *Tailwind*: everything goes in the `@theme` block, which is created after the `@import`s if there isn't one.
 
 Then load the fonts the way the project already does:
