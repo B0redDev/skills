@@ -105,8 +105,9 @@
   body[data-frame="mobile"][data-orientation="landscape"] .dp-frame { --dp-status-h: 44px; --dp-toolbar-h: 21px; --dp-side: 59px; width: 852px; height: 393px; }
   body[data-frame="mobile"][data-orientation="landscape"][data-chrome="app"] .dp-frame { --dp-status-h: 0px; }
   body[data-frame="tablet"][data-orientation="landscape"] .dp-frame { width: 1180px; height: 820px; }
-  body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-viewport { scrollbar-width: none; }
-  body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-viewport::-webkit-scrollbar { display: none; }
+  /* Touch devices draw no scroll bars, in the page or in any scrolling area inside it. */
+  body:is([data-frame="mobile"], [data-frame="tablet"]) :is(.dp-viewport, .dp-viewport *) { scrollbar-width: none; }
+  body:is([data-frame="mobile"], [data-frame="tablet"]) :is(.dp-viewport, .dp-viewport *)::-webkit-scrollbar { display: none; }
   body:is([data-frame="mobile"], [data-frame="tablet"]) :is(.dp-statusbar, .dp-safari) {
     position: absolute; z-index: 2; left: 0; right: 0; color: var(--dp-device-fg); pointer-events: none;
     font-family: -apple-system, "SF Pro Text", system-ui, sans-serif; line-height: 1.45;
