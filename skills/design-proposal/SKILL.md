@@ -21,7 +21,7 @@ Variants that ignore the real product are useless for approval, so look first:
 
 - **Brief**: what is being designed, for whom, the primary task on the screen, hard constraints (platform, existing flows, data shown).
 - **Existing design language** (if there's a codebase): grep for theme/tokens files, Tailwind config, CSS variables, component library, fonts, icon set. Reuse real colors, radii, type scale, spacing, and copy tone so the proposal looks like *their* product. With impeccable: run `<impeccable-dir>/scripts/impeccable context` once from the project root. It loads `PRODUCT.md`, `DESIGN.md` and any surface brief, and those outrank your own grep. A missing `PRODUCT.md` doesn't block a proposal, so skip the init it suggests.
-- **Platform**: web desktop, responsive web, mobile web, or native mobile app. This decides the default frame and, on mobile, whether Safari's chrome is shown (see step 3).
+- **Platform**: web desktop, responsive web, mobile web, or native mobile app. This decides the default frame and, on mobile, whether Safari's chrome is shown (see step 3). For a native app, hand over to the `native-design-proposal` skill when it is installed and the platform's toolchain is available: it renders the variants with the real toolkit instead of imitating it in HTML.
 - **Real content**: use plausible domain data (real-looking names, numbers, dates, labels). Never lorem ipsum — fake text hides layout problems and makes variants hard to judge.
 
 If a missing answer would change the variants fundamentally (e.g. mobile vs desktop), ask one batched question. Otherwise make a reasonable assumption, state it in the notes, and proceed.
