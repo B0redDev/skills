@@ -59,6 +59,9 @@ The script builds a real `.app`, opens it at `SIZE` (default `1100x720`, in poin
 
 - The capture needs the terminal to have Screen Recording permission (System Settings › Privacy & Security). If it fails, tell the user which app to allow; nothing else replaces it.
 - Each capture brings the proposal's window to the front for a couple of seconds, on the user's own screen. Tell them before a batch.
+- It is a capture of the screen, so another app's window lying over the proposal ends up in the picture. The helper warns when it sees one. Don't touch that window: give the proposal's window another position (another display works) or ask the user, and capture again.
+
+With `SIZE` set, the size is part of the file name (`a-mac-760x480.png`), so the check at the minimum size doesn't overwrite the normal capture.
 
 A capture is at the display's scale: on a non-Retina display it is 1x and will look soft when viewed on a Retina one. Say so if it applies.
 

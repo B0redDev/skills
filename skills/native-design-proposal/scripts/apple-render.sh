@@ -30,7 +30,7 @@ build="$dir/.build/$platform"
 id="proposal.$(basename "$dir" | tr -c 'A-Za-z0-9\n' '-')"
 settle=${SETTLE:-2}
 out="$dir"
-if [ "${1:-}" = -o ]; then out="$dir/$2"; shift 2; fi
+if [ "${1:-}" = -o ]; then case $2 in /*) out=$2;; *) out="$dir/$2";; esac; shift 2; fi
 mkdir -p "$build" "$out"
 
 sources=("$dir"/*.swift)
@@ -125,13 +125,15 @@ elif [ "$platform" = mac ]; then
   size=${SIZE:-1100x720}
   if [ -n "${APP:-}" ] || [ -x "$build/proposal-app" ]; then
     # shortcut: a bare executable only; for an .app bundle with resources, launch it yourself and call mac-shot.
-    bin="$build/proposal-app"; [ -z "${APP:-}" ] || cp "$APP" "$bin"
+    # rm first: overwriting a signed executable in place gets the next launch killed on Apple Silicon.
+    bin="$build/proposal-app"; [ -z "${APP:-}" ] || { rm -f "$bin"; cp "$APP" "$bin"; }
     launch() {
       local arg long=()
       for arg in "${args[@]}"; do case $arg in -*) long+=("-$arg");; *) long+=("$arg");; esac; done
       pkill -f "$bin" 2>/dev/null || true
       nohup "$bin" "${long[@]}" --size "$size" >/dev/null 2>&1 &
       disown; sleep 1
+      kill -0 $! 2>/dev/null || { echo "$bin exited at launch: run it by hand to see why" >&2; exit 1; }
       # A window started from a terminal opens behind it and draws inactive.
       osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $!) to true" >/dev/null || true
     }
@@ -151,7 +153,7 @@ elif [ "$platform" = mac ]; then
     shot)
       for spec in "$@"; do
         parse "$spec"; launch; sleep "$settle"
-        file="$out/$stem-mac$dark.png"
+        file="$out/$stem-mac${SIZE:+-$SIZE}$dark.png"
         figure "$file" "$("$build/mac-shot" "$(pgrep -n -f "$bin")" "$file" "$look")" mac "Mac · $look"
       done
       pkill -f "$bin" 2>/dev/null || true;;

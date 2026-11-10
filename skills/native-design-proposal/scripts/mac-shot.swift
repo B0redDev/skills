@@ -17,13 +17,25 @@ guard arguments.count >= 3, let pid = Int(arguments[1]) else { fail("usage: mac-
 let all = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
 var union = CGRect.null
 var lowest = 0
-for window in all where window[kCGWindowOwnerPID as String] as? Int == pid {
+var ahead: [(owner: String, rect: CGRect)] = []     // other apps' windows met so far: in front of our next one
+var inFront: [(owner: String, rect: CGRect)] = []
+for window in all {
     guard let bounds = window[kCGWindowBounds as String], let id = window[kCGWindowNumber as String] as? Int,
           let rect = CGRect(dictionaryRepresentation: bounds as! CFDictionary), rect.width > 1 else { continue }
-    union = union.union(rect)
-    lowest = id
+    if window[kCGWindowOwnerPID as String] as? Int == pid {
+        union = union.union(rect)
+        lowest = id
+        inFront += ahead
+        ahead = []
+    } else if let layer = window[kCGWindowLayer as String] as? Int, (0..<20).contains(layer),   // below the Dock and the menu bar
+              window[kCGWindowAlpha as String] as? Double ?? 1 > 0 {
+        ahead.append((window[kCGWindowOwnerName as String] as? String ?? "another app", rect))
+    }
 }
 guard lowest != 0 else { fail("no on-screen window for pid \(pid)") }
+for owner in Set(inFront.filter { $0.rect.intersects(union) }.map(\.owner)) {
+    FileHandle.standardError.write(Data("warning: a window of \(owner) is in front of the proposal and is in this capture. Leave it alone: move the proposal's window, or ask the user, and capture again.\n".utf8))
+}
 
 let rect = union.insetBy(dx: -64, dy: -64).integral   // room for the shadows
 let app = NSApplication.shared

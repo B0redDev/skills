@@ -58,7 +58,9 @@ SIZE=760x520 "$render" mac "$dir" shot -o final b      # no APP: the copy from t
 "$render" mac "$dir" run b                             # leave it running for the user; `stop` quits it
 ```
 
-The script copies a bare executable. An app that needs a bundle around it (resources beside the binary) has to be launched by you and captured with `mac-shot` directly (see `macos.md`).
+The script copies a bare executable. An app that needs a bundle around it (resources beside the binary) has to be launched by you and captured with `mac-shot` directly (see `macos.md`). Load sample images from a folder next to the copy (a path relative to `current_exe()`, with the images kept in `$dir`), so the proposal still runs after the worktree is removed.
+
+Two things about key bindings in GPUI Kit, when the proposal adds a shortcut: `gpui_kit::init` already binds some chords globally (⌥⌘I opens its debug inspector), and a binding with a key context only fires when the window's root tracks focus. A shortcut that does nothing, or opens something else, is one of these two.
 
 ## Flutter and others
 

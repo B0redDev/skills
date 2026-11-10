@@ -152,7 +152,7 @@ Open every capture and look at it. You wrote the code from an idea of the platfo
 - Dark: is any text or icon lost, any raw colour left unadapted?
 - Do the variants still differ in a way that matters, now that they are real?
 
-Fix in the variant's source and capture again. One inspection round plus one confirmation round is enough: polishing variants nobody has chosen wastes the user's time. Large text, a small device and landscape are checked on the approved variant in step 8, not on all of them. Once the page is assembled, load it once and confirm every capture shows.
+Fix in the variant's source and capture again. One inspection round plus one confirmation round is enough: polishing variants nobody has chosen wastes the user's time. Large text, a small device and landscape are checked on the approved variant in step 8, not on all of them. Once the page is assembled, load it once and confirm every capture shows (over a local web server, if your browser tool refuses `file://`).
 
 ## 6. Collect feedback
 
@@ -166,11 +166,11 @@ Each round captures into a new subdirectory and assembles a new `vN.html`. The s
 - If they want a mix: build the combined version as a new variant, first in the `cat`, and keep the sources as reference tabs.
 - If nothing works: ask what's missing, then go wider, not narrower.
 
-Mention what changed since the previous round (a short "Changes" list in the notes) so the user doesn't have to diff captures by eye. Stop iterating when the user approves.
+Mention what changed since the previous round (a short "Changes" list in the notes) so the user doesn't have to diff captures by eye. Stop iterating when the user approves. An approval that comes with changes ("B, but move Export") is still an approval: make the changes as part of step 8 and show them in the final page, instead of opening another round.
 
 ## 8. Finalise and report
 
-Give the approved variant the checks that were skipped while it was one of three, and fix what they find: a large text size, the smallest device or window the product supports, the second device class and landscape if it ships there, and Reduce Motion if it has custom motion. Capture them into `final/`, assemble `final.html` from `head.html` and the approved fragment only, and open it. Then stop what the proposal left running (`apple-render.sh … stop` quits the app and shuts down the simulators the proposal booted).
+Give the approved variant the checks that were skipped while it was one of three, and fix what they find: a large text size where the platform has that setting, the smallest device or window the product supports, the second device class and landscape if it ships there, and Reduce Motion if it has custom motion. Capture them into `final/`, assemble `final.html` from `head.html` and the approved fragment only, and open it. Then stop what the proposal left running (`apple-render.sh … stop` quits the app and shuts down the simulators the proposal booted).
 
 Report back in the user's language:
 
