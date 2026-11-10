@@ -1,0 +1,54 @@
+{
+  "skill_name": "native-design-proposal",
+  "evals": [
+    {
+      "id": 1,
+      "name": "iphone-settings-standalone",
+      "prompt": "Devo rifare la schermata impostazioni della mia app iPhone (SwiftUI, iOS 26+) per seguire le partite di calcio: notifiche per squadra preferita (gol, inizio partita, risultato finale), lingua, tema chiaro/scuro, gestione account e abbonamento premium. Prima di toccare il codice fammi vedere qualche proposta, deve sembrare un'app Apple.",
+      "expected_output": "A scratch directory with 2-4 SwiftUI variants built from stock components, real simulator captures (light and dark) per variant, a tabbed decision page with tradeoffs and a 'Try it' command per variant, and a message that ends by asking the user to pick. No production code.",
+      "files": [],
+      "assertions": [
+        "variants_are_real_native_code_not_html",
+        "captures_come_from_the_simulator",
+        "multiple_variants_in_tabs",
+        "variants_structurally_different",
+        "stock_components_no_hand_drawn_chrome",
+        "light_and_dark_captured",
+        "realistic_content_no_lorem",
+        "tradeoffs_per_variant",
+        "asks_for_feedback_no_prod_code"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "mac-window-three-structures",
+      "prompt": "I'm building a Mac app to manage my podcast recordings: a library of episodes (title, show, duration, recording date, status: draft/edited/published), a detail view with the waveform and chapter markers, and export presets. How should the main window look? Show me a few options before I write any of it.",
+      "expected_output": "2-4 Mac variants that differ in window structure (two columns, three columns, inspector), captured as real windows with a selected row, plausible episode data, menus and shortcuts named in the notes, and a request for feedback.",
+      "files": [],
+      "assertions": [
+        "variants_are_real_native_code_not_html",
+        "captures_are_real_mac_windows",
+        "multiple_variants_in_tabs",
+        "variants_structurally_different",
+        "mac_density_and_window_anatomy_not_ipad_proportions",
+        "selection_state_shown",
+        "menus_and_shortcuts_named",
+        "tradeoffs_per_variant",
+        "asks_for_feedback_no_prod_code"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "android-missing-toolchain",
+      "prompt": "app android in compose per prenotare campi da padel, mi serve la schermata di ricerca: data, fascia oraria, circolo, tipo di campo (indoor/outdoor), prezzo. come la faresti? voglio vedere delle alternative",
+      "expected_output": "On a machine without the Android SDK: says so before designing and offers to set the toolchain up or fall back to design-proposal with an HTML approximation labelled as such. With the SDK: Compose Material 3 variants captured from the emulator.",
+      "files": [],
+      "assertions": [
+        "toolchain_checked_before_designing",
+        "no_imitation_presented_as_native_render",
+        "material_3_idioms_not_ios_ones",
+        "asks_the_user_how_to_proceed_or_for_feedback"
+      ]
+    }
+  ]
+}

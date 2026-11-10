@@ -1,0 +1,161 @@
+<!--
+  Native design proposal shell. Append it to the proposal's own files; never edit or retype it:
+    cat head.html a.html b.html c.html <skill-dir>/assets/shell.html > v1.html
+  It shows every <section class="np-variant"> as a tab (label: data-name), lays out the captures inside it
+  (<figure class="np-shot …">, as printed by the render script) and moves its .np-variant-notes into the side
+  panel. Header: <title> and <body data-subtitle>. Contract: SKILL.md, step 4.
+-->
+<style>
+  :root {
+    --np-bg: #f4f4f5; --np-fg: #18181b; --np-muted: #71717a; --np-line: #e4e4e7;
+    --np-accent: #18181b; --np-panel: #ffffff;
+    --np-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --np-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --np-bg: #0f0f11; --np-fg: #f4f4f5; --np-muted: #a1a1aa; --np-line: #27272a; --np-accent: #f4f4f5; --np-panel: #18181b; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--np-bg); color: var(--np-fg); font: 14px/1.45 var(--np-font); scrollbar-color: var(--np-line) transparent; }
+
+  .np-header { position: sticky; top: 0; z-index: 100; background: var(--np-panel); border-bottom: 1px solid var(--np-line); }
+  .np-header-row { display: flex; align-items: center; gap: 16px; padding: 12px 20px; flex-wrap: wrap; }
+  .np-title { font-weight: 600; font-size: 15px; }
+  .np-subtitle { color: var(--np-muted); }
+  .np-spacer { flex: 1; }
+  .np-tabs { display: flex; gap: 4px; padding: 0 16px; overflow-x: auto; }
+  .np-tab, .np-fit {
+    font: inherit; color: var(--np-muted); background: none; border: 0; cursor: pointer;
+    padding: 10px 12px; border-bottom: 2px solid transparent; white-space: nowrap;
+    /* Only press feedback moves; selection changes (click or keys 1–9) switch instantly. */
+    transition: transform 160ms var(--np-ease-out), color 150ms ease;
+  }
+  .np-tab:active, .np-fit:active { transform: scale(0.97); }
+  @media (hover: hover) and (pointer: fine) {
+    .np-tab:hover, .np-fit:not([aria-pressed="true"]):hover { color: var(--np-fg); }
+  }
+  @media (prefers-reduced-motion: reduce) { .np-tab:active, .np-fit:active { transform: none; } }
+  .np-tab[aria-selected="true"] { color: var(--np-fg); border-bottom-color: var(--np-accent); font-weight: 600; }
+  :is(.np-tab, .np-fit) kbd { font: 11px var(--np-font); border: 1px solid var(--np-line); border-radius: 4px; padding: 0 4px; }
+  .np-tab kbd { color: var(--np-muted); margin-right: 6px; }
+  .np-fit { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--np-line); border-radius: 8px; }
+  .np-fit[aria-pressed="true"] { background: var(--np-accent); color: var(--np-panel); }
+  .np-tab:focus-visible, .np-fit:focus-visible { outline: 2px solid var(--np-accent); outline-offset: -2px; }
+
+  .np-main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; padding: 20px; align-items: start; }
+  @media (max-width: 1000px) { .np-main { grid-template-columns: 1fr; } }
+  /* scroll-margin: the URL's #v-a is also this section's anchor, and must not land under the sticky header. */
+  .np-variant { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 28px; scroll-margin-top: 140px; }
+  .np-variant[hidden], .np-variant-notes[hidden] { display: none; }
+
+  /* Captures show at their real size in points, so type and touch targets can be judged; "Fit" trades that for
+     an overview. */
+  .np-shot { margin: 0; min-width: 0; text-align: center; }
+  .np-shot :is(img, video) { display: block; max-width: 100%; height: auto; }
+  body[data-fit] .np-shot :is(img, video) { width: auto; max-height: calc(100vh - 170px); }
+  /* A simulator capture is masked to the screen's shape: the outline and the shadow follow it on any device. */
+  .np-shot:not(.np-mac) :is(img, video) { filter: drop-shadow(0 0 1px rgb(0 0 0 / .55)) drop-shadow(0 18px 36px rgb(0 0 0 / .18)); }
+  @media (prefers-color-scheme: dark) { .np-shot:not(.np-mac) :is(img, video) { filter: drop-shadow(0 0 1px rgb(255 255 255 / .4)); } }
+  .np-shot:not(.np-mac) video { border-radius: 12%/5.6%; }
+  /* A Mac capture brings its own shadows, on a plain backdrop. */
+  .np-mac :is(img, video) { border-radius: 12px; }
+  /* Captures taken by hand are plain rectangles: round them to the platform's screen or window corners. */
+  .np-android :is(img, video) { border-radius: 32px; }
+  .np-windows :is(img, video) { border-radius: 8px; }
+  .np-shot figcaption { margin-top: 10px; color: var(--np-muted); font-size: 12px; }
+
+  .np-notes { position: sticky; top: 120px; background: var(--np-panel); border: 1px solid var(--np-line); border-radius: 12px; padding: 16px; }
+  .np-notes h2 { font-size: 18px; font-weight: 700; line-height: 1.3; letter-spacing: -0.01em; margin: 0 0 8px; }
+  .np-notes h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--np-muted); margin: 14px 0 4px; }
+  .np-notes p, .np-notes ul { margin: 0; }
+  .np-notes ul { padding-left: 18px; }
+  .np-notes :is(code, pre) { font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .np-notes pre { margin: 0; padding: 8px 10px; background: var(--np-bg); border-radius: 8px; white-space: pre-wrap; word-break: break-all; user-select: all; }
+</style>
+<header class="np-header">
+  <div class="np-header-row">
+    <div>
+      <div class="np-title"></div>
+      <div class="np-subtitle"></div>
+    </div>
+    <div class="np-spacer"></div>
+    <button type="button" class="np-fit" aria-pressed="false" title="Fit the captures to the window (F)">Fit <kbd>F</kbd></button>
+  </div>
+  <nav class="np-tabs" role="tablist" aria-label="Variants"></nav>
+</header>
+
+<main class="np-main">
+  <div class="np-stage"></div>
+  <aside class="np-notes" aria-live="polite"></aside>
+</main>
+
+<script>
+(() => {
+  const variants = [...document.querySelectorAll('.np-variant')];
+  const panel = document.querySelector('.np-notes');
+  // The variants come before this shell in the file: move them into the stage and their notes into the panel.
+  variants.forEach(v => {
+    v.role = 'tabpanel';
+    const n = v.querySelector('.np-variant-notes');
+    if (n) { n.dataset.for = v.id; panel.append(n); }
+  });
+  document.querySelector('.np-stage').append(...variants);
+  document.querySelector('.np-title').textContent = document.title;
+  document.querySelector('.np-subtitle').textContent = document.body.dataset.subtitle || '';
+  const tablist = document.querySelector('.np-tabs');
+  const tabs = variants.map((v, i) => {
+    const b = document.createElement('button');
+    b.className = 'np-tab'; b.type = 'button'; b.role = 'tab';
+    b.id = 'tab-' + v.id; b.setAttribute('aria-controls', v.id);
+    v.setAttribute('aria-labelledby', b.id);
+    b.innerHTML = (i < 9 ? `<kbd>${i + 1}</kbd>` : '') + v.dataset.name;
+    b.onclick = () => select(i, true);
+    tablist.append(b);
+    return b;
+  });
+
+  let current = 0;
+  function select(i, focus) {
+    i = (i + variants.length) % variants.length;
+    variants.forEach((v, j) => { v.hidden = j !== i; tabs[j].setAttribute('aria-selected', j === i); tabs[j].tabIndex = j === i ? 0 : -1; });
+    document.querySelectorAll('.np-variant-notes').forEach(n => n.hidden = n.dataset.for !== variants[i].id);
+    current = i;
+    saveHash();
+    if (focus) tabs[i].focus();
+  }
+
+  const fit = document.querySelector('.np-fit');
+  function setFit(on) {
+    document.body.toggleAttribute('data-fit', on);
+    fit.setAttribute('aria-pressed', on);
+    saveHash();
+  }
+  fit.onclick = () => setFit(!document.body.hasAttribute('data-fit'));
+
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('input, textarea, select, [contenteditable]') || e.metaKey || e.ctrlKey || e.altKey) return;
+    const n = parseInt(e.key, 10);
+    if (n >= 1 && n <= variants.length) select(n - 1, false);
+    else if (e.key === 'f') fit.click();
+    else if (e.key === 'ArrowRight' && e.target.closest('.np-tabs')) select(current + 1, true);
+    else if (e.key === 'ArrowLeft' && e.target.closest('.np-tabs')) select(current - 1, true);
+  });
+
+  // replaceState throws in sandboxed/srcdoc frames; state persistence is optional there.
+  function saveHash() {
+    try { history.replaceState(null, '', '#' + variants[current].id + (document.body.hasAttribute('data-fit') ? '@fit' : '')); } catch {}
+  }
+  // On load, and when a tab already showing the file navigates to another hash (v1.html#v-b@fit).
+  function fromHash() {
+    const [id, mode] = location.hash.slice(1).split('@');
+    select(Math.max(0, variants.findIndex(v => v.id === id)), false);
+    setFit(mode === 'fit');
+  }
+  addEventListener('hashchange', fromHash);
+  fromHash();
+})();
+</script>
+</body>
+</html>
