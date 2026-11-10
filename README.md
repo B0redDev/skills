@@ -4,7 +4,7 @@ Agent skills by [@B0redDev](https://github.com/B0redDev), for Claude Code and ot
 
 | Skill | What it does |
 | --- | --- |
-| [design-proposal](skills/design-proposal/SKILL.md) | Proposes several UI design variants as one self-contained HTML file with tabs, opens it in the browser, iterates on your feedback, and reports the approved direction as a spec. |
+| [design-proposal](skills/design-proposal/SKILL.md) | Proposes several web UI design variants as one self-contained HTML file: all of them side by side, then each one in a real-size desktop, tablet or phone frame, with working interactions and motion. Opens it in the browser, iterates on your feedback, and reports the approved direction as a spec. |
 | [native-design-proposal](skills/native-design-proposal/SKILL.md) | The same loop for native apps (iOS, iPadOS, macOS, Android, Windows): builds the variants as real native code from stock components, captures them from the simulator or as real windows, shows the captures in a tabbed decision page, lets you try each variant live, and reports the approved direction as a spec. Ships a build-and-capture script for SwiftUI that needs no Xcode project. |
 | [theme-generator](skills/theme-generator/SKILL.md) | Generates Tailwind v4 palettes or shadcn/ui tokens (colours, radius, fonts) from a brand colour, a description, an image, a URL or your current theme; previews 2–3 candidates in light and dark with contrast checks and writes the chosen one into your CSS. |
 
@@ -27,7 +27,7 @@ ln -s ~/Developer/skills/skills/theme-generator ~/.claude/skills/theme-generator
 
 ### Optional companions for `design-proposal`
 
-`design-proposal` works on its own. When these skills are installed it also uses them: impeccable for design quality (project context, variant derivation, craft floor, anti-pattern detector) and emil-design-eng for interaction and motion.
+`design-proposal` works on its own. When these skills are installed it also uses them: impeccable for design quality (project context, variant derivation, craft floor, anti-pattern detector) and emil-design-eng for interaction and motion. When the agent has an image generation tool, it also generates the pictures a design needs, in the style of the product's own.
 
 ```bash
 npx skills add pbakaus/impeccable

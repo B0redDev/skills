@@ -1,76 +1,103 @@
 <!--
   Design proposal shell. Append it, after the Tailwind runtime, to the proposal's own files; never edit or retype it:
-    cat head.html a.html b.html c.html <skill-dir>/assets/tailwind.html <skill-dir>/assets/shell.html > v1.html
-  It frames every <section class="dp-variant"> (tab label: data-name) and moves the .dp-variant-notes inside
-  each section into the side panel. Header: <title> and <body data-subtitle>. Contract: SKILL.md, step 3.
+    cat head.html [context.html] a.html b.html c.html <skill-dir>/assets/tailwind.html <skill-dir>/assets/shell.html > v1.html
+  Every <section class="dp-variant"> gets its own frame (tab label: data-name) at a real viewport size, scaled to fit.
+  The .dp-variant-notes inside each section move to the side panel, and a <template class="dp-context">, when there is
+  one, is wrapped around each variant. Contract: SKILL.md, "The shell contract".
   The chrome sets every property it relies on, since Tailwind's preflight resets the defaults.
 -->
 <style>
   :root {
     --dp-bg: #f4f4f5; --dp-fg: #18181b; --dp-muted: #71717a; --dp-line: #e4e4e7;
-    --dp-accent: #18181b; --dp-panel: #ffffff;
+    --dp-accent: #18181b; --dp-panel: #ffffff; --dp-radius: 12px;
     --dp-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     --dp-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   }
   @media (prefers-color-scheme: dark) {
     :root { --dp-bg: #0f0f11; --dp-fg: #f4f4f5; --dp-muted: #a1a1aa; --dp-line: #27272a; --dp-accent: #f4f4f5; --dp-panel: #18181b; }
   }
+  html, body { height: 100%; margin: 0; }
+  /* minmax(0, …): the column must not grow to the header's full width when the window is narrower. */
+  body { display: grid; grid-template: auto minmax(0, 1fr) / minmax(0, 1fr); overflow: hidden; background: var(--dp-bg); color: var(--dp-fg); scrollbar-color: var(--dp-line) transparent; }
+  .dp-header, .dp-notes, .dp-caption { font: 13px/1.45 var(--dp-font); }
   * { box-sizing: border-box; }
-  html, body { margin: 0; }
-  body { background: var(--dp-bg); color: var(--dp-fg); scrollbar-color: var(--dp-line) transparent; }
-  .dp-header, .dp-notes { font: 14px/1.45 var(--dp-font); }
-  .dp-header ::selection, .dp-notes ::selection { background: var(--dp-accent); color: var(--dp-panel); }
+  :is(.dp-header, .dp-notes, .dp-caption) ::selection { background: var(--dp-accent); color: var(--dp-panel); }
 
-  .dp-header { position: sticky; top: 0; z-index: 100; background: var(--dp-panel); border-bottom: 1px solid var(--dp-line); }
-  .dp-header-row { display: flex; align-items: center; gap: 16px; padding: 12px 20px; flex-wrap: wrap; }
-  .dp-title { font-weight: 600; font-size: 15px; }
-  .dp-subtitle { color: var(--dp-muted); }
-  .dp-spacer { flex: 1; }
-  .dp-tabs { display: flex; gap: 4px; padding: 0 16px; overflow-x: auto; }
-  .dp-tab, .dp-seg button {
-    font: inherit; color: var(--dp-muted); background: none; border: 0; cursor: pointer;
-    padding: 10px 12px; border-bottom: 2px solid transparent; white-space: nowrap;
-    /* Only press feedback moves; selection changes (click or keys 1–9) switch instantly. */
-    transition: transform 160ms var(--dp-ease-out), color 150ms ease;
+  /* Header: what is being decided, the variants, and how to look at them. */
+  /* One row: when it runs out of room the subtitle gives way first, then the tabs scroll. */
+  .dp-header { display: flex; align-items: center; gap: 20px; min-height: 49px; padding: 0 16px; background: var(--dp-panel); border-bottom: 1px solid var(--dp-line); white-space: nowrap; }
+  .dp-title { flex: none; font-weight: 600; font-size: 14px; }
+  .dp-subtitle { flex: 0 100 auto; min-width: 0; margin: 0 -12px; overflow: hidden; text-overflow: ellipsis; color: var(--dp-muted); }
+  .dp-round { flex: none; padding: 1px 7px; border: 1px solid var(--dp-line); border-radius: 999px; font-size: 11px; color: var(--dp-muted); }
+  :is(.dp-subtitle, .dp-round, .dp-header kbd, .dp-caption kbd):empty { display: none; }
+  .dp-tabs { display: flex; align-self: stretch; gap: 2px; min-width: 0; overflow-x: auto; }
+  .dp-controls { display: flex; flex: none; align-items: center; gap: 8px; margin-left: auto; padding: 8px 0; }
+  :is(.dp-header, .dp-caption) button {
+    font: inherit; color: var(--dp-muted); background: none; border: 0; cursor: pointer; white-space: nowrap;
+    /* Only press feedback moves; selection changes (click or keys) switch instantly. */
+    transition: transform 160ms var(--dp-ease-out), color 150ms ease, background-color 150ms ease;
   }
-  .dp-tab:active, .dp-seg button:active { transform: scale(0.97); }
+  .dp-header button:disabled { cursor: default; opacity: .5; }
+  .dp-header button:active:not(:disabled) { transform: scale(0.97); }
   @media (hover: hover) and (pointer: fine) {
-    .dp-tab:hover, .dp-seg button:not([aria-pressed="true"]):hover { color: var(--dp-fg); }
+    .dp-header button:hover:not(:disabled) { color: var(--dp-fg); }
+    body[data-view="all"] .dp-cell:hover .dp-fit { outline: 2px solid var(--dp-accent); outline-offset: 5px; }
   }
-  .dp-tab[aria-selected="true"] { color: var(--dp-fg); border-bottom-color: var(--dp-accent); font-weight: 600; }
-  .dp-tab kbd { font: 11px var(--dp-font); color: var(--dp-muted); border: 1px solid var(--dp-line); border-radius: 4px; padding: 0 4px; margin-right: 6px; }
-  .dp-seg { display: inline-flex; border: 1px solid var(--dp-line); border-radius: 8px; overflow: hidden; }
-  .dp-seg button { padding: 5px 10px; border: 0; }
-  .dp-seg button[aria-pressed="true"] { background: var(--dp-accent); color: var(--dp-panel); }
-  .dp-rotate { display: inline-flex; align-items: center; gap: 6px; }
-  .dp-rotate svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .dp-rotate kbd { font: 11px var(--dp-font); opacity: .7; }
-  body[data-frame="desktop"] .dp-seg:has(.dp-rotate) { display: none; }
-  .dp-tab:focus-visible, .dp-seg button:focus-visible { outline: 2px solid var(--dp-accent); outline-offset: -2px; }
+  :is(.dp-header, .dp-caption) button:focus-visible { outline: 2px solid var(--dp-accent); outline-offset: -2px; }
+  :is(.dp-header, .dp-caption) kbd { font: 11px var(--dp-font); color: var(--dp-muted); border: 1px solid var(--dp-line); border-radius: 4px; padding: 0 4px; }
+  .dp-header .dp-tab { display: flex; align-items: center; gap: 6px; padding: 0 10px; border: solid transparent; border-width: 2px 0; }
+  .dp-tab[aria-selected="true"] { color: var(--dp-fg); border-bottom-color: var(--dp-accent); }
+  .dp-seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--dp-bg); }
+  .dp-seg button { padding: 4px 10px; border-radius: 6px; }
+  .dp-seg button[aria-pressed="true"] { background: var(--dp-panel); color: var(--dp-fg); box-shadow: 0 1px 2px rgb(0 0 0 / .14); }
+  .dp-icon { display: inline-grid; place-items: center; min-width: 32px; height: 32px; padding: 0 8px; border-radius: 8px; font-variant-numeric: tabular-nums; }
+  .dp-icon[aria-pressed="true"] { background: var(--dp-bg); color: var(--dp-fg); }
+  .dp-icon svg { display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  body[data-frame="desktop"] .dp-rotate, body:not([data-theme]) .dp-theme, body[data-view="all"] :is(.dp-zoom, .dp-notes-toggle) { display: none; }
 
-  .dp-main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; padding: 20px; align-items: start; }
-  @media (max-width: 1000px) { .dp-main { grid-template-columns: 1fr; } }
-  /* The iPad does not fit beside the notes on narrower screens: stack them. */
-  @media (max-width: 1220px) { body:is([data-frame="tablet"], [data-frame="mobile"][data-orientation="landscape"]) .dp-main { grid-template-columns: 1fr; } }
-  @media (max-width: 1600px) { body[data-frame="tablet"][data-orientation="landscape"] .dp-main { grid-template-columns: 1fr; } }
-  .dp-stage { display: flex; justify-content: center; }
+  /* Stage: one cell per variant. In the overview all of them show, scaled down side by side. */
+  .dp-main { display: grid; grid-template-columns: minmax(0, 1fr) auto; min-height: 0; }
+  .dp-stage { display: flex; padding: 24px; overflow: auto; }
+  .dp-grid { display: grid; grid-template-columns: repeat(var(--dp-cols, 1), max-content); gap: 24px; margin: auto; }
+  .dp-cell { margin: 0; }
+  .dp-cell[hidden], .dp-variant[hidden], .dp-variant-notes[hidden] { display: none !important; }
+  body[data-view="all"] .dp-cell { cursor: pointer; }
+  /* The frame keeps its real size and is scaled; .dp-fit takes the scaled size in the layout. */
+  .dp-fit { width: calc(var(--dp-w) * var(--dp-scale)); height: calc(var(--dp-h) * var(--dp-scale)); border-radius: calc(var(--dp-radius) * var(--dp-scale)); }
+  .dp-caption { display: none; }
+  body[data-view="all"] .dp-caption { display: block; width: calc(var(--dp-w) * var(--dp-scale)); height: 60px; margin-top: 12px; overflow: hidden; }
+  .dp-caption button { display: flex; align-items: center; gap: 6px; max-width: 100%; padding: 0; color: var(--dp-fg); font-weight: 600; }
+  .dp-caption p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; margin: 2px 0 0; overflow: hidden; color: var(--dp-muted); }
+
   .dp-frame {
     /* --dp-theme is the page colour Safari tints its bars with; the script sets it per variant. */
     --dp-theme: #fff; --dp-device-fg: #000; --dp-glass: rgb(250 250 250 / .72); --dp-glass-line: rgb(0 0 0 / .1);
-    position: relative; width: 100%; background: var(--dp-theme); color: #18181b; border-radius: 12px; overflow: hidden;
+    --dp-status-h: 0px; --dp-toolbar-h: 0px;
+    position: relative; box-sizing: content-box; width: var(--dp-desktop-w, 1440px); height: var(--dp-desktop-h, 900px);
+    background: var(--dp-theme); color: #18181b; border-radius: var(--dp-radius); overflow: hidden;
     box-shadow: 0 1px 2px rgb(0 0 0 / .06), 0 8px 24px rgb(0 0 0 / .08);
+    /* The transform also makes the frame the containing block of position: fixed inside a variant. */
+    transform: scale(var(--dp-scale)); transform-origin: 0 0;
   }
   .dp-frame[data-tone="dark"] { --dp-device-fg: #fff; --dp-glass: rgb(44 44 46 / .72); --dp-glass-line: rgb(255 255 255 / .14); }
-  .dp-viewport { container: frame / inline-size; }
+  /* The page scrolls inside the frame, so the fold is real. A size container: breakpoints and cqh measure it. */
+  .dp-viewport {
+    position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin;
+    padding: var(--dp-status-h) var(--dp-side, 0px) var(--dp-toolbar-h);
+    container: frame / size;
+  }
+  .dp-variant { min-height: 100%; }
 
-  /* Mobile and tablet: real-size devices in Safari; the page scrolls inside the screen. */
+  /* Mobile and tablet: real-size devices in Safari. */
   .dp-statusbar, .dp-safari { display: none; }
+  body[data-frame="mobile"] { --dp-radius: 66px; }
+  body[data-frame="tablet"] { --dp-radius: 36px; }
   body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-frame {
-    box-sizing: content-box; flex: none; border: 11px solid #1c1c1e;
+    border: 11px solid #1c1c1e;
     box-shadow: 0 0 0 1.5px #48484a, 0 2px 4px rgb(0 0 0 / .1), 0 24px 60px rgb(0 0 0 / .22);
   }
-  body[data-frame="mobile"] .dp-frame { --dp-status-h: 54px; --dp-toolbar-h: 90px; width: 393px; height: 852px; border-radius: 66px; }
-  body[data-frame="tablet"] .dp-frame { --dp-status-h: 74px; --dp-toolbar-h: 20px; width: 820px; height: 1180px; border-width: 18px; border-radius: 36px; }
+  body[data-frame="mobile"] .dp-frame { --dp-status-h: 54px; --dp-toolbar-h: 90px; width: 393px; height: 852px; }
+  body[data-frame="tablet"] .dp-frame { --dp-status-h: 74px; --dp-toolbar-h: 20px; width: 820px; height: 1180px; border-width: 18px; }
   body[data-frame="mobile"][data-chrome="app"] .dp-frame { --dp-toolbar-h: 34px; }
   body[data-frame="tablet"][data-chrome="app"] .dp-frame { --dp-status-h: 24px; }
   /* Landscape. iPhone: no status bar, Safari's toolbar moves to the top, the page is inset by the side safe
@@ -78,12 +105,8 @@
   body[data-frame="mobile"][data-orientation="landscape"] .dp-frame { --dp-status-h: 44px; --dp-toolbar-h: 21px; --dp-side: 59px; width: 852px; height: 393px; }
   body[data-frame="mobile"][data-orientation="landscape"][data-chrome="app"] .dp-frame { --dp-status-h: 0px; }
   body[data-frame="tablet"][data-orientation="landscape"] .dp-frame { width: 1180px; height: 820px; }
-  body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-viewport {
-    position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
-    padding: var(--dp-status-h) var(--dp-side, 0px) var(--dp-toolbar-h);
-  }
+  body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-viewport { scrollbar-width: none; }
   body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-viewport::-webkit-scrollbar { display: none; }
-  body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-variant { min-height: 100%; }
   body:is([data-frame="mobile"], [data-frame="tablet"]) :is(.dp-statusbar, .dp-safari) {
     position: absolute; z-index: 2; left: 0; right: 0; color: var(--dp-device-fg); pointer-events: none;
     font-family: -apple-system, "SF Pro Text", system-ui, sans-serif; line-height: 1.45;
@@ -117,7 +140,7 @@
     box-shadow: inset 0 0 0 .5px var(--dp-glass-line), 0 6px 20px rgb(0 0 0 / .12);
   }
   :is(.dp-glass, .dp-toolbar-top) svg { display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .dp-round { flex: none; width: 48px; }
+  .dp-round-btn { flex: none; width: 48px; }
   .dp-address { flex: 1; min-width: 0; justify-content: space-between; gap: 8px; padding: 0 16px; font-size: 15px; }
   .dp-url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dp-home { position: absolute; bottom: 8px; left: 50%; width: 139px; height: 5px; transform: translateX(-50%); border-radius: 3px; background: currentColor; }
@@ -139,200 +162,307 @@
     border-radius: 12px; background: color-mix(in srgb, var(--dp-device-fg) 8%, transparent);
   }
   @media (prefers-color-scheme: dark) { body:is([data-frame="mobile"], [data-frame="tablet"]) .dp-frame { border-color: #2c2c2e; box-shadow: 0 0 0 1.5px #636366, 0 24px 60px rgb(0 0 0 / .5); } }
-  @media (prefers-reduced-motion: reduce) { .dp-tab:active, .dp-seg button:active { transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .dp-header button:active { transform: none; } }
 
-  .dp-notes { position: sticky; top: 120px; background: var(--dp-panel); border: 1px solid var(--dp-line); border-radius: 12px; padding: 16px; }
+  .dp-notes { width: 320px; padding: 20px; overflow-y: auto; background: var(--dp-panel); border-left: 1px solid var(--dp-line); }
+  body:is([data-notes="off"], [data-view="all"]) .dp-notes { display: none; }
   .dp-notes h2 { font-size: 18px; font-weight: 700; line-height: 1.3; letter-spacing: -0.01em; margin: 0 0 8px; }
   .dp-notes h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--dp-muted); margin: 14px 0 4px; }
   .dp-notes p, .dp-notes ul { margin: 0; }
   .dp-notes ul { padding-left: 18px; list-style: disc; }
-
-  .dp-variant[hidden], .dp-variant-notes[hidden] { display: none !important; }
 </style>
 <style type="text/tailwindcss">
-  /* Breakpoints measure the frame, not the browser window, so the frame toggle previews them. */
-  @custom-variant sm (@container frame (width >= 40rem));
-  @custom-variant md (@container frame (width >= 48rem));
-  @custom-variant lg (@container frame (width >= 64rem));
-  @custom-variant xl (@container frame (width >= 80rem));
-  @custom-variant 2xl (@container frame (width >= 96rem));
-  @custom-variant max-sm (@container frame (width < 40rem));
-  @custom-variant max-md (@container frame (width < 48rem));
-  @custom-variant max-lg (@container frame (width < 64rem));
-  @custom-variant max-xl (@container frame (width < 80rem));
-  @custom-variant max-2xl (@container frame (width < 96rem));
+  /* The frame's size also stands in for the viewport units behind the screen utilities. */
+  @utility h-screen { height: 100cqh; }
+  @utility min-h-screen { min-height: 100cqh; }
+  @utility max-h-screen { max-height: 100cqh; }
+  @utility h-dvh { height: 100cqh; }
+  @utility min-h-dvh { min-height: 100cqh; }
+  @utility max-h-dvh { max-height: 100cqh; }
+  @utility h-svh { height: 100cqh; }
+  @utility min-h-svh { min-height: 100cqh; }
+  @utility w-screen { width: 100cqw; }
 </style>
   <header class="dp-header">
-    <div class="dp-header-row">
-      <div>
-        <div class="dp-title"></div>
-        <div class="dp-subtitle"></div>
-      </div>
-      <div class="dp-spacer"></div>
+    <span class="dp-title"></span><span class="dp-subtitle"></span><span class="dp-round"></span>
+    <nav class="dp-tabs" role="tablist" aria-label="Variants"></nav>
+    <div class="dp-controls">
       <div class="dp-seg" role="group" aria-label="Preview size">
         <button type="button" data-frame="desktop">Desktop</button>
         <button type="button" data-frame="tablet">Tablet</button>
         <button type="button" data-frame="mobile">Mobile</button>
       </div>
-      <div class="dp-seg">
-        <button type="button" class="dp-rotate" aria-pressed="false" title="Rotate the device (R)">
-          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5H6a2 2 0 0 0-2 2v3"/><path d="m9 8 3-3-3-3"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/></svg>
-          Rotate <kbd>R</kbd>
-        </button>
-      </div>
+      <!-- Icons: Lucide (ISC), lucide.dev. -->
+      <button type="button" class="dp-icon dp-rotate" title="Rotate the device (R)" aria-label="Rotate the device">
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5H6a2 2 0 0 0-2 2v3"/><path d="m9 8 3-3-3-3"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/></svg>
+      </button>
+      <button type="button" class="dp-icon dp-theme" title="Dark theme (D)" aria-label="Dark theme">
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+      <button type="button" class="dp-icon dp-zoom" title="Actual size (Z)" aria-label="Actual size"></button>
+      <button type="button" class="dp-icon dp-notes-toggle" title="Notes (N)" aria-label="Notes">
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M15 3v18"/></svg>
+      </button>
     </div>
-    <nav class="dp-tabs" role="tablist" aria-label="Variants"></nav>
   </header>
 
   <main class="dp-main">
-    <div class="dp-stage">
-      <div class="dp-frame">
-        <!-- Device chrome, shown only in the mobile and tablet frames. Toolbar icons: Lucide (ISC), lucide.dev. -->
-        <div class="dp-statusbar" aria-hidden="true">
-          <span class="dp-clock">9:41<span class="dp-date"></span></span>
-          <span class="dp-island"></span>
-          <span class="dp-status-icons">
-            <svg class="dp-signal" width="18" height="12" viewBox="0 0 18 12"><rect y="7.5" width="3" height="4.5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" width="3" height="12" rx="1"/></svg>
-            <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 2.3c2.2 0 4.2.8 5.7 2.2.2.2.5.2.7 0l.9-.9c.2-.2.2-.5 0-.7A10.3 10.3 0 0 0 .7 2.9c-.2.2-.2.5 0 .7l.9.9c.2.2.5.2.7 0A8.2 8.2 0 0 1 8 2.3Zm0 3.4c1.3 0 2.4.4 3.4 1.2.2.2.5.2.7 0l.9-.9c.2-.2.2-.5 0-.7a7 7 0 0 0-10 0c-.2.2-.2.5 0 .7l.9.9c.2.2.5.2.7 0 1-.8 2.1-1.2 3.4-1.2Zm2.2 3.1c.2-.2.2-.5 0-.7a3.3 3.3 0 0 0-4.4 0c-.2.2-.2.5 0 .7l1.9 1.9c.2.2.5.2.7 0l1.8-1.9Z"/></svg>
-            <svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.8" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="20" height="9" rx="2.5"/><path d="M25 4.4v4.2a2.3 2.3 0 0 0 0-4.2Z" opacity=".45"/></svg>
-          </span>
-          <div class="dp-toolbar-top">
-            <span class="dp-tools">
-              <svg width="24" height="24" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
-              <svg width="24" height="24" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
-              <svg class="dp-off" width="24" height="24" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-            </span>
-            <span class="dp-top-address">
-              <svg width="18" height="18" viewBox="0 0 24 24"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
-              <span class="dp-url"></span>
-              <svg width="18" height="18" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
-            </span>
-            <span class="dp-tools">
-              <svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 2v13"/><path d="m16 6-4-4-4 4"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/></svg>
-              <svg width="24" height="24" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-              <svg width="24" height="24" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-            </span>
-          </div>
-        </div>
-        <div class="dp-safari" aria-hidden="true">
-          <div class="dp-safari-row">
-            <span class="dp-glass dp-round"><svg width="22" height="22" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></span>
-            <span class="dp-glass dp-address">
-              <svg width="18" height="18" viewBox="0 0 24 24"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
-              <span class="dp-url"></span>
-              <svg width="18" height="18" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
-            </span>
-            <span class="dp-glass dp-round"><svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span>
-          </div>
-          <span class="dp-home"></span>
-        </div>
-
-        <div class="dp-viewport"></div>
-      </div>
-    </div>
-
+    <div class="dp-stage"><div class="dp-grid"></div></div>
     <aside class="dp-notes" aria-live="polite"></aside>
   </main>
 
+  <template id="dp-cell">
+    <figure class="dp-cell">
+      <div class="dp-fit">
+        <div class="dp-frame">
+          <!-- Device chrome, shown only in the mobile and tablet frames. -->
+          <div class="dp-statusbar" aria-hidden="true">
+            <span class="dp-clock">9:41<span class="dp-date"></span></span>
+            <span class="dp-island"></span>
+            <span class="dp-status-icons">
+              <svg class="dp-signal" width="18" height="12" viewBox="0 0 18 12"><rect y="7.5" width="3" height="4.5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" width="3" height="12" rx="1"/></svg>
+              <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 2.3c2.2 0 4.2.8 5.7 2.2.2.2.5.2.7 0l.9-.9c.2-.2.2-.5 0-.7A10.3 10.3 0 0 0 .7 2.9c-.2.2-.2.5 0 .7l.9.9c.2.2.5.2.7 0A8.2 8.2 0 0 1 8 2.3Zm0 3.4c1.3 0 2.4.4 3.4 1.2.2.2.5.2.7 0l.9-.9c.2-.2.2-.5 0-.7a7 7 0 0 0-10 0c-.2.2-.2.5 0 .7l.9.9c.2.2.5.2.7 0 1-.8 2.1-1.2 3.4-1.2Zm2.2 3.1c.2-.2.2-.5 0-.7a3.3 3.3 0 0 0-4.4 0c-.2.2-.2.5 0 .7l1.9 1.9c.2.2.5.2.7 0l1.8-1.9Z"/></svg>
+              <svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.8" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="20" height="9" rx="2.5"/><path d="M25 4.4v4.2a2.3 2.3 0 0 0 0-4.2Z" opacity=".45"/></svg>
+            </span>
+            <div class="dp-toolbar-top">
+              <span class="dp-tools">
+                <svg width="24" height="24" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+                <svg class="dp-off" width="24" height="24" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+              </span>
+              <span class="dp-top-address">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+                <span class="dp-url"></span>
+                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+              </span>
+              <span class="dp-tools">
+                <svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 2v13"/><path d="m16 6-4-4-4 4"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              </span>
+            </div>
+          </div>
+          <div class="dp-safari" aria-hidden="true">
+            <div class="dp-safari-row">
+              <span class="dp-glass dp-round-btn"><svg width="22" height="22" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></span>
+              <span class="dp-glass dp-address">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+                <span class="dp-url"></span>
+                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+              </span>
+              <span class="dp-glass dp-round-btn"><svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span>
+            </div>
+            <span class="dp-home"></span>
+          </div>
+          <div class="dp-viewport"></div>
+        </div>
+      </div>
+      <figcaption class="dp-caption"><button type="button"><kbd></kbd><span></span></button><p></p></figcaption>
+    </figure>
+  </template>
+
 <script>
 (() => {
-  const variants = [...document.querySelectorAll('.dp-variant')];
-  const viewport = document.querySelector('.dp-viewport');
-  const panel = document.querySelector('.dp-notes');
-  // The variants come before this shell in the file: move them into the frame and their notes into the panel.
+  const $ = (s, root = document) => root.querySelector(s);
+  const $$ = (s, root = document) => [...root.querySelectorAll(s)];
+  const body = document.body, d = body.dataset;
+  const stage = $('.dp-stage'), grid = $('.dp-grid'), panel = $('.dp-notes');
+  const variants = $$('.dp-variant');
+
+  // Breakpoints measure the frame, not the browser window, so the frame toggle previews them. Their values, and
+  // the class the `dark` variant reads, come from the theme in head.html when the project defines its own.
+  const theme = $$('style[type="text/tailwindcss"]').map(s => s.textContent).join('\n');
+  const breakpoints = { sm: '40rem', md: '48rem', lg: '64rem', xl: '80rem', '2xl': '96rem' };
+  for (const [, name, value] of theme.matchAll(/--breakpoint-(\w+):\s*([^;}]+)/g)) breakpoints[name] = value.trim();
+  const darkClass = theme.match(/@custom-variant\s+dark\s*\([^)]*?\.([\w-]+)/)?.[1] || 'dark';
+  document.head.append(Object.assign(document.createElement('style'), {
+    type: 'text/tailwindcss',
+    textContent: (/@custom-variant\s+dark\b/.test(theme) ? '' : '@custom-variant dark (&:where(.dark, .dark *));')
+      + Object.entries(breakpoints).map(([name, value]) => value === 'initial' ? '' :
+        `@custom-variant ${name} (@container frame (width >= ${value}));@custom-variant max-${name} (@container frame (width < ${value}));`).join(''),
+  }));
+
+  // The variants come before this shell in the file. Notes go to the panel first, so they stay out of the context.
   variants.forEach(v => {
     v.role = 'tabpanel';
-    const n = v.querySelector('.dp-variant-notes');
+    const n = $('.dp-variant-notes', v);
     if (n) { n.dataset.for = v.id; panel.append(n); }
   });
-  viewport.append(...variants);
-  document.querySelector('.dp-title').textContent = document.title;
-  document.querySelector('.dp-subtitle').textContent = document.body.dataset.subtitle || '';
-  const tablist = document.querySelector('.dp-tabs');
-  const tabs = variants.map((v, i) => {
+
+  // Shared context: a copy of the template wraps each variant, whose children replace the <slot> they name
+  // (no slot attribute: the unnamed slot). A slot no child fills keeps its own content, like a native slot.
+  const context = $('template.dp-context');
+  if (context) variants.forEach(v => {
+    if (v.dataset.context === 'none') return;
+    const copy = context.content.cloneNode(true);
+    $$('slot', copy).forEach(slot => {
+      const fill = [...v.children].filter(c => (c.getAttribute('slot') || '') === slot.name);
+      slot.replaceWith(...(fill.length ? fill : slot.childNodes));
+    });
+    v.append(copy);
+  });
+
+  // One frame per variant, so the overview can show them side by side.
+  // iPadOS shows the date next to the clock, e.g. "Thu Oct 8".
+  const date = new Date().toLocaleDateString(document.documentElement.lang || undefined, { weekday: 'short', month: 'short', day: 'numeric' }).replace(/,/g, '');
+  const cells = variants.map((v, i) => {
+    const cell = $('#dp-cell').content.firstElementChild.cloneNode(true);
+    $('.dp-viewport', cell).append(v);
+    $$('.dp-url', cell).forEach(u => u.textContent = d.url || 'example.com');
+    $('.dp-date', cell).textContent = date;
+    $('.dp-caption kbd', cell).textContent = i < 9 ? i + 1 : '';
+    $('.dp-caption span', cell).textContent = v.dataset.name;
+    $('.dp-caption p', cell).textContent = $(`.dp-variant-notes[data-for="${v.id}"] p`)?.textContent || '';
+    cell.onclick = () => { if (d.view === 'all') show(i, true); };
+    grid.append(cell);
+    return cell;
+  });
+
+  $('.dp-title').textContent = document.title;
+  $('.dp-subtitle').textContent = d.subtitle || '';
+  // The round comes from the file name, so head.html is the same in every round.
+  const file = location.pathname.split('/').pop(), round = file.match(/^v(\d+)\./);
+  $('.dp-round').textContent = round ? 'Round ' + round[1] : file.startsWith('final.') ? 'Final' : '';
+  const [desktopW, desktopH] = (d.desktop || '').split('x');
+  if (desktopW) body.style.setProperty('--dp-desktop-w', desktopW + 'px');
+  if (desktopH) body.style.setProperty('--dp-desktop-h', desktopH + 'px');
+
+  const tablist = $('.dp-tabs');
+  const addTab = (label, key, i) => {
     const b = document.createElement('button');
     b.className = 'dp-tab'; b.type = 'button'; b.role = 'tab';
+    b.append(Object.assign(document.createElement('kbd'), { textContent: key }), label);
+    b.onclick = () => show(i, true);
+    tablist.append(b);
+    return b;
+  };
+  const allTab = variants.length > 1 ? addTab('All', 0, -1) : null;
+  const tabs = variants.map((v, i) => {
+    const b = addTab(v.dataset.name, i < 9 ? i + 1 : '', i);
     b.id = 'tab-' + v.id; b.setAttribute('aria-controls', v.id);
     v.setAttribute('aria-labelledby', b.id);
-    b.innerHTML = (i < 9 ? `<kbd>${i + 1}</kbd>` : '') + v.dataset.name;
-    b.onclick = () => select(i, true);
-    tablist.append(b);
     return b;
   });
 
-  function select(i, focus) {
-    i = (i + variants.length) % variants.length;
-    variants.forEach((v, j) => { v.hidden = j !== i; tabs[j].setAttribute('aria-selected', j === i); tabs[j].tabIndex = j === i ? 0 : -1; });
-    document.querySelectorAll('.dp-variant-notes').forEach(n => n.hidden = n.dataset.for !== variants[i].id);
-    syncDevice(variants[i]);
-    current = i;
-    saveHash();
-    if (focus) tabs[i].focus();
+  // show(-1) is the overview; a single variant has none.
+  let current = 0;
+  function show(i, focus) {
+    const all = i < 0 && variants.length > 1;
+    if (!all) current = Math.max(i, 0);
+    d.view = all ? 'all' : 'one';
+    cells.forEach((c, j) => { c.hidden = !all && j !== current; $('.dp-frame', c).inert = all; });
+    [allTab, ...tabs].forEach((t, j) => {
+      if (!t) return;
+      const on = all ? j === 0 : j === current + 1;
+      t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1;
+      if (on && focus) t.focus();
+    });
+    $$('.dp-variant-notes').forEach(n => n.hidden = n.dataset.for !== variants[current].id);
+    if (!all) {
+      const v = variants[current];
+      v.parentNode.scrollTop = 0;
+      // Opening a variant replays its entrance animations: CSS animations restart when an element is displayed again.
+      v.hidden = true; v.offsetWidth; v.hidden = false;
+    }
+    sync();
+  }
+
+  // Scale the frames to the stage: one of them, or all of them in the grid that shows them largest.
+  function fit() {
+    const all = d.view === 'all', n = all ? cells.length : 1;
+    const frame = $('.dp-frame', cells[current]);
+    const w = frame.offsetWidth, h = frame.offsetHeight;
+    let cols = 1, scale = 0;
+    for (let c = 1; c <= n; c++) {
+      // 24px of padding and gaps around every cell, 72px for the caption under it.
+      const s = Math.min(1, ((stage.clientWidth - 24) / c - 24) / w, ((stage.clientHeight - 24) / Math.ceil(n / c) - 24 - (all ? 72 : 0)) / h);
+      if (s >= scale) { cols = c; scale = s; }
+    }
+    // A frame that fits at actual size has nothing to zoom: the button says 100% and is off.
+    const fits = scale >= 1, zoom = $('.dp-zoom');
+    scale = !all && d.zoom === '100' ? 1 : Math.max(scale, 0.1);
+    grid.style.cssText = `--dp-cols:${cols};--dp-w:${w}px;--dp-h:${h}px;--dp-scale:${scale}`;
+    zoom.textContent = Math.round(scale * 100) + '%';
+    zoom.disabled = fits;
+    zoom.title = fits ? 'Already at actual size' : 'Actual size (Z)';
+    zoom.setAttribute('aria-pressed', !fits && d.zoom === '100');
   }
 
   // Safari tints the status bar and toolbar with the page colour (its theme-color), and flips their
   // ink to white on dark pages. Canvas normalises any CSS colour (hex, oklch, …) to RGBA.
-  const frame = document.querySelector('.dp-frame');
-  const probe = document.createElement('canvas').getContext('2d');
-  document.querySelectorAll('.dp-url').forEach(u => u.textContent = document.body.dataset.url || 'example.com');
-  // iPadOS shows the date next to the clock, e.g. "Thu Oct 8".
-  document.querySelector('.dp-date').textContent = new Date()
-    .toLocaleDateString(document.documentElement.lang || undefined, { weekday: 'short', month: 'short', day: 'numeric' }).replace(/,/g, '');
-  function syncDevice(v) {
-    probe.clearRect(0, 0, 1, 1);
-    probe.fillStyle = 'transparent'; // an invalid colour below leaves fillStyle unchanged
-    probe.fillStyle = v.dataset.themeColor || getComputedStyle(v).backgroundColor;
-    probe.fillRect(0, 0, 1, 1);
-    const [r, g, b, a] = probe.getImageData(0, 0, 1, 1).data;
-    const theme = a ? `rgb(${r} ${g} ${b})` : '#fff';
-    frame.style.setProperty('--dp-theme', theme);
-    // WCAG relative luminance; below 0.179 white ink has more contrast than black.
-    const lum = [r, g, b].map(c => (c /= 255) <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-    frame.dataset.tone = a && 0.2126 * lum[0] + 0.7152 * lum[1] + 0.0722 * lum[2] < 0.179 ? 'dark' : 'light';
-    viewport.scrollTop = 0;
+  const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+  function tint() {
+    variants.forEach((v, i) => {
+      const frame = $('.dp-frame', cells[i]);
+      probe.clearRect(0, 0, 1, 1);
+      probe.fillStyle = 'transparent'; // an invalid colour below leaves fillStyle unchanged
+      probe.fillStyle = v.dataset.themeColor || getComputedStyle(v).backgroundColor;
+      probe.fillRect(0, 0, 1, 1);
+      const [r, g, b, a] = probe.getImageData(0, 0, 1, 1).data;
+      frame.style.setProperty('--dp-theme', a ? `rgb(${r} ${g} ${b})` : '#fff');
+      // WCAG relative luminance; below 0.179 white ink has more contrast than black.
+      const lum = [r, g, b].map(c => (c /= 255) <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+      frame.dataset.tone = a && 0.2126 * lum[0] + 0.7152 * lum[1] + 0.0722 * lum[2] < 0.179 ? 'dark' : 'light';
+    });
   }
+  // The Tailwind runtime compiles after this script runs, and again when classes change.
+  new MutationObserver(tint).observe(document.head, { childList: true, characterData: true, subtree: true });
 
-  function setFrame(f) {
-    document.body.dataset.frame = f;
-    document.querySelectorAll('.dp-seg [data-frame]').forEach(b => b.setAttribute('aria-pressed', b.dataset.frame === f));
-    saveHash();
+  // Every control writes body's dataset; sync() applies it.
+  function sync() {
+    $$('.dp-seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.frame === d.frame));
+    $('.dp-rotate').setAttribute('aria-pressed', d.orientation === 'landscape');
+    $('.dp-theme').setAttribute('aria-pressed', d.theme === 'dark');
+    $('.dp-notes-toggle').setAttribute('aria-pressed', d.notes === 'on');
+    $$('.dp-viewport').forEach(vp => {
+      vp.classList.toggle(darkClass, d.theme === 'dark');
+      vp.style.colorScheme = d.theme === 'dark' ? 'dark' : '';
+    });
+    fit(); tint();
+    // localStorage and replaceState throw in sandboxed/srcdoc frames; persistence is optional there.
+    try {
+      const state = [d.view === 'all' ? 'all' : variants[current].id, d.frame, d.orientation];
+      history.replaceState(null, '', '#' + state.concat(themed ? d.theme : []).join('@'));
+      localStorage.dpNotes = d.notes;
+    } catch {}
   }
-  document.querySelectorAll('.dp-seg [data-frame]').forEach(b => b.onclick = () => setFrame(b.dataset.frame));
-
-  const rotate = document.querySelector('.dp-rotate');
-  function setOrientation(o) {
-    document.body.dataset.orientation = o;
-    rotate.setAttribute('aria-pressed', o === 'landscape');
-    saveHash();
-  }
-  const toggleOrientation = () => setOrientation(document.body.dataset.orientation === 'landscape' ? 'portrait' : 'landscape');
-  rotate.onclick = toggleOrientation;
+  const flip = (key, a, b) => { d[key] = d[key] === a ? b : a; sync(); };
+  const themed = d.theme === 'light' || d.theme === 'dark', defaultTheme = d.theme;
+  $$('.dp-seg button').forEach(b => b.onclick = () => { d.frame = b.dataset.frame; sync(); });
+  $('.dp-rotate').onclick = () => flip('orientation', 'landscape', 'portrait');
+  $('.dp-theme').onclick = () => flip('theme', 'dark', 'light');
+  $('.dp-zoom').onclick = () => flip('zoom', '100', 'fit');
+  $('.dp-notes-toggle').onclick = () => flip('notes', 'on', 'off');
 
   document.addEventListener('keydown', e => {
     if (e.target.closest('input, textarea, select, [contenteditable]') || e.metaKey || e.ctrlKey || e.altKey) return;
-    const n = parseInt(e.key, 10);
-    if (n >= 1 && n <= variants.length) select(n - 1, false);
-    else if (e.key === 'r' && document.body.dataset.frame !== 'desktop') toggleOrientation();
-    else if (e.key === 'ArrowRight' && e.target.closest('.dp-tabs')) select(current + 1, true);
-    else if (e.key === 'ArrowLeft' && e.target.closest('.dp-tabs')) select(current - 1, true);
+    const key = e.key.toLowerCase(), n = parseInt(key, 10);
+    if (n >= 1 && n <= variants.length) show(n - 1);
+    else if (n === 0) show(-1);
+    else if (key === 'r' && d.frame !== 'desktop') $('.dp-rotate').click();
+    else if (key === 'd' && themed) $('.dp-theme').click();
+    else if (key === 'z' && d.view === 'one') $('.dp-zoom').click();
+    else if (key === 'n' && d.view === 'one') $('.dp-notes-toggle').click();
+    else if ((key === 'arrowright' || key === 'arrowleft') && e.target.closest('.dp-tabs')) {
+      // Arrow keys walk the tab list, the overview included, and wrap around.
+      const first = allTab ? -1 : 0, count = variants.length - first;
+      const at = (d.view === 'all' ? -1 : current) - first + (key === 'arrowright' ? 1 : -1);
+      show((at + count) % count + first, true);
+    }
   });
 
-  // replaceState throws in sandboxed/srcdoc frames; state persistence is optional there.
-  function saveHash() {
-    const { frame, orientation } = document.body.dataset;
-    try { history.replaceState(null, '', '#' + variants[current].id + '@' + frame + '@' + orientation); } catch {}
-  }
-
-  let current = 0;
   // On load, and when a tab already showing the file navigates to another hash (v1.html#v-b@mobile).
   function fromHash() {
-    const [id, frame, orientation] = location.hash.slice(1).split('@');
-    document.body.dataset.frame = frame || document.body.dataset.defaultFrame || 'desktop';
-    document.body.dataset.orientation = orientation || document.body.dataset.defaultOrientation || 'portrait';
-    select(Math.max(0, variants.findIndex(v => v.id === id)), false);
-    setFrame(document.body.dataset.frame);
-    setOrientation(document.body.dataset.orientation);
+    const [id, frame, orientation, theme] = location.hash.slice(1).split('@');
+    d.frame = frame || d.defaultFrame || 'desktop';
+    d.orientation = orientation || d.defaultOrientation || 'portrait';
+    if (themed) d.theme = theme || defaultTheme;
+    show(variants.findIndex(v => v.id === id));
   }
+  let notes;
+  try { notes = localStorage.dpNotes; } catch {}
+  d.notes = notes || (innerWidth >= 1200 ? 'on' : 'off');
+  new ResizeObserver(fit).observe(stage);
   addEventListener('hashchange', fromHash);
   fromHash();
 })();

@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Filters · Postbox</title>
+<style type="text/tailwindcss">
+  @theme {
+    --color-brand: #0b7a4b;
+    --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+    --animate-rise: rise 400ms var(--ease-out-strong) both;
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+  }
+  @layer base {
+    .dp-variant { @apply bg-white text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100; }
+  }
+</style>
+<body data-subtitle="Where the filter lives" data-theme="light" data-url="postbox.app">

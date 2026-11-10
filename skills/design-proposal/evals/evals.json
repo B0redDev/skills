@@ -3,51 +3,99 @@
   "evals": [
     {
       "id": 1,
-      "name": "expo-settings-mobile",
-      "prompt": "Devo rifare la schermata impostazioni della mia app Expo per seguire le partite di calcio: notifiche per squadra preferita (gol, inizio partita, risultato finale), lingua, tema chiaro/scuro, gestione account e abbonamento premium. Prima di toccare il codice fammi vedere qualche proposta di design.",
-      "expected_output": "Single self-contained HTML with 2-4 structurally different mobile settings designs in tabs, realistic football content, per-variant tradeoffs, and a message asking the user to pick/comment. No production code.",
+      "name": "analytics-dashboard-desktop",
+      "prompt": "I'm building a self-hosted, privacy-friendly web analytics tool. I need the main dashboard: visitors over time, top pages, referrers, countries, devices, and a realtime 'people online now' counter. Show me a few layout options before I build it.",
+      "expected_output": "One self-contained v1.html with 2-4 genuinely different dashboard layouts (not colour swaps), plausible analytics numbers, per-variant notes with tradeoffs, some motion or interaction, and a closing question. No production code.",
       "files": [],
       "assertions": [
-        "single_self_contained_html",
-        "multiple_variants_in_tabs",
-        "variants_structurally_different",
-        "realistic_content_no_lorem",
-        "tradeoffs_per_variant",
-        "mobile_frame_used",
-        "native_app_chrome_without_safari",
-        "asks_for_feedback_no_prod_code"
+        "v1.html is one self-contained file: no external scripts or stylesheets apart from at most one Google Fonts link",
+        "v1.html has 2 to 4 <section class=\"dp-variant\"> elements, each with an id, a data-name and a .dp-variant-notes block",
+        "The variants differ in layout structure or interaction model, not only in colours or fonts",
+        "The content is plausible analytics data (page paths, referrer domains, countries, numbers); no lorem ipsum or placeholder text",
+        "Every variant's notes state its tradeoffs, with at least one downside",
+        "At least one variant has a transition or animation utility (transition-*, animate-*, active:scale-*), and it has a motion-reduce: fallback or animates only on press",
+        "The final message gives the path of v1.html and ends with a question asking the user to choose or comment",
+        "No production code is written outside the proposal's folder"
       ]
     },
     {
       "id": 2,
-      "name": "analytics-dashboard-desktop",
-      "prompt": "I'm building a self-hosted, privacy-friendly web analytics tool. I need the main dashboard: visitors over time, top pages, referrers, countries, devices, and a realtime 'people online now' counter. Show me a few layout options before I build it.",
-      "expected_output": "Single self-contained HTML with 2-4 genuinely different dashboard layouts (not color swaps) in tabs, plausible analytics numbers, tradeoffs, and a request for feedback.",
-      "files": [],
+      "name": "bulk-actions-existing-codebase",
+      "prompt": "In questo progetto (billing-app) la pagina Fatture, src/pages/Invoices.tsx, mostra le azioni di massa (segna come pagata, invia sollecito, esporta, annulla) in una riga sopra la tabella che compare quando selezioni qualcosa, e fa saltare giù tutta la tabella. Fammi vedere delle alternative per dove mettere le azioni di massa, prima di toccare il codice.",
+      "expected_output": "A proposal about one part of an existing screen: the invoices page is written once as a shared context, each variant holds only the bulk-actions part, and the project's own Tailwind theme (including its dark theme) is used. Ends with a question; the project's source is untouched.",
+      "files": [
+        "evals/files/billing-app/src/app.css",
+        "evals/files/billing-app/src/pages/Invoices.tsx"
+      ],
       "assertions": [
-        "single_self_contained_html",
-        "multiple_variants_in_tabs",
-        "variants_structurally_different",
-        "realistic_content_no_lorem",
-        "tradeoffs_per_variant",
-        "asks_for_feedback_no_prod_code"
+        "v1.html contains exactly one <template class=\"dp-context\"> with the invoices page (search, status filter, table) and at least one <slot>",
+        "The invoices table markup is written once, in context.html, and not repeated in the variant fragments",
+        "Each variant fragment contains only its bulk-actions part and its notes, or opts out with data-context=\"none\" because it restructures the page",
+        "head.html carries the project's theme from src/app.css: the @theme inline block and the :root and .dark variables, so classes such as bg-background, border-border and text-muted-foreground resolve",
+        "head.html has no @import or @plugin line",
+        "<body> has data-theme, so the light/dark toggle is available",
+        "The rows show plausible invoices (numbers, customer names, dates, amounts, statuses)",
+        "Every variant's notes state its tradeoffs",
+        "The final message ends with a question, and no file under billing-app/ was modified"
       ]
     },
     {
       "id": 3,
-      "name": "onboarding-flow-multistep",
-      "prompt": "app per imparare il giapponese leggendo manga, mi serve l'onboarding: l'utente sceglie livello JLPT (o 'non lo so'), generi preferiti, obiettivo giornaliero in minuti. come lo faresti? voglio vedere delle alternative",
-      "expected_output": "Single self-contained HTML with alternative onboarding flows (e.g. stepper vs single scroll vs conversational) showing the relevant steps/states, mobile frame, realistic Japanese/manga content, tradeoffs, and a feedback request.",
+      "name": "booking-mobile-web",
+      "prompt": "sto facendo il sito di prenotazione per una catena di barberie: dal telefono il cliente sceglie sede, servizio, barbiere e orario e poi conferma. è un sito, non un'app, e quasi tutti arrivano da un link su instagram. come lo imposteresti? voglio vedere delle alternative",
+      "expected_output": "A mobile-first web proposal: 2-4 alternative booking flows (for example stepper, single scrolling page, conversational) opening in the phone frame with Safari's chrome, showing the steps that matter, with realistic Italian content, transitions between steps, tradeoffs, and a closing question.",
       "files": [],
       "assertions": [
-        "single_self_contained_html",
-        "multiple_variants_in_tabs",
-        "variants_structurally_different",
-        "realistic_content_no_lorem",
-        "tradeoffs_per_variant",
-        "mobile_frame_used",
-        "native_app_chrome_without_safari",
-        "asks_for_feedback_no_prod_code"
+        "<body> has data-default-frame=\"mobile\" and a data-url, and does not have data-chrome=\"app\"",
+        "v1.html has 2 to 4 variants that differ in flow structure, not only in styling",
+        "The variants do not use h-[100vh], popover or <dialog>.showModal(), which would escape the phone frame",
+        "The content is realistic and in Italian (shop locations, services with prices and durations, barber names, time slots)",
+        "At least one step change or selection in each variant is interactive and animated with a transition, with a motion-reduce: fallback",
+        "Every variant's notes state its tradeoffs",
+        "The final message ends with a question asking the user to choose or comment, and no production code is written"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "round-2-mix",
+      "prompt": "La cartella inbox-round1 è la cartella di lavoro di una proposta già arrivata al round 1 (head.html, context.html, a.html, b.html, c.html; il v1.html l'ho già visto). Mi piacciono i chip nella toolbar di A, ma per i filtri avanzati vorrei il drawer di C che si apre da un pulsante accanto ai chip. Fammi il round 2.",
+      "expected_output": "A new fragment that combines A's chips with C's drawer inside the shared context, assembled first into v2.html with A and C kept as reference tabs. head.html and context.html are unchanged, the mix's notes list what changed, and the message ends with a question.",
+      "files": [
+        "evals/files/inbox-round1/head.html",
+        "evals/files/inbox-round1/context.html",
+        "evals/files/inbox-round1/a.html",
+        "evals/files/inbox-round1/b.html",
+        "evals/files/inbox-round1/c.html"
+      ],
+      "assertions": [
+        "v2.html exists in the working folder and its first <section class=\"dp-variant\"> is a new variant with its own id",
+        "The new variant uses the shared context: it fills the toolbar slot with the chips and a button, and does not repeat the sidebar or the page header",
+        "The drawer in the new variant opens and closes from that button, with a transition",
+        "v2.html still contains variants A and C as reference tabs",
+        "head.html is byte-identical to the round 1 file: the round label is not written into it",
+        "The new variant's notes have a Changes section",
+        "The final message ends with a question"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "finalise-approved-variant",
+      "prompt": "La cartella inbox-round1 è la cartella di lavoro di una proposta al round 1 (head.html, context.html, a.html, b.html, c.html). Approvo la B così com'è: chiudi la proposta.",
+      "expected_output": "final.html assembled from head.html, context.html and b.html only, and a report in Italian with the decision, the spec, a motion table or an explicit 'none', implementation notes, and the path of final.html. No production code; an offer to implement next.",
+      "files": [
+        "evals/files/inbox-round1/head.html",
+        "evals/files/inbox-round1/context.html",
+        "evals/files/inbox-round1/a.html",
+        "evals/files/inbox-round1/b.html",
+        "evals/files/inbox-round1/c.html"
+      ],
+      "assertions": [
+        "final.html exists and contains exactly one <section class=\"dp-variant\">, variant B, together with the shared context template",
+        "The report is in Italian and names the chosen variant and what was rejected",
+        "The report has a spec: layout structure, components, tokens (colours, type, spacing, radii), interactions and states",
+        "The report covers motion and interaction, as a table or as an explicit statement that the design has none",
+        "The report gives the path of final.html",
+        "No production code is written; the message offers to implement next"
       ]
     }
   ]
