@@ -6,7 +6,7 @@ Use this route when the decision depends on the app's own components or design s
 
 - **Never in the working tree's real screens.** Work on a scratch branch or, better, a git worktree of the project, so the proposal can be thrown away whole. Tell the user where it is, and remove it when the proposal is approved unless they want to keep the code.
 - **A debug-only entry point that switches on `variant` and `state`**, the same inputs as the standalone route, given by whatever the toolkit offers at launch: arguments, a deep link, intent extras, an environment variable. It also takes the appearance and, for a desktop window, the size, when the toolkit doesn't follow the system for them. Variants live in their own folder, one file each, next to one file of sample data.
-- **Reuse the app's theme and components, not its data layer.** Sample data in, pixels out. A proposal must not read or write the user's real library, settings, keychain or accounts, and must not start the app's servers or background jobs: give it sample data in memory or a temporary data folder.
+- **Reuse the app's theme and components, not its data layer.** Sample data in, pixels out. A proposal must not read or write the user's real library, settings, keychain, clipboard or accounts, and must not start the app's servers or background jobs: give it sample data in memory or a temporary data folder, and a simulated clipboard.
 - **The captures and the decision page are the same** as in the standalone route: `$dir` outside the repository holds `head.html`, the fragments, the captures per round, and `vN.html`.
 
 ## Xcode project (SwiftUI, UIKit, AppKit)
@@ -61,6 +61,8 @@ SIZE=760x520 "$render" mac "$dir" shot -o final b      # no APP: the copy from t
 The script copies a bare executable. An app that needs a bundle around it (resources beside the binary) has to be launched by you and captured with `mac-shot` directly (see `macos.md`). Load sample images from a folder next to the copy (a path relative to `current_exe()`, with the images kept in `$dir`), so the proposal still runs after the worktree is removed.
 
 Two things about key bindings in GPUI Kit, when the proposal adds a shortcut: `gpui_kit::init` already binds some chords globally (⌥⌘I opens its debug inspector), and a binding with a key context only fires when the window's root tracks focus. A shortcut that does nothing, or opens something else, is one of these two.
+
+A state that starts with an overlay open: a dialog, sheet or notification opened from the entry point has to wait for the first frame (`window.defer`), while a popover the view controls can start open. The kit's dropdown menus cannot be opened from state or by a background click: focus the button and press Return (with a desktop automation tool), then capture with `mac-shot` by hand.
 
 ## Flutter and others
 

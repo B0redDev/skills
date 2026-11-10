@@ -134,8 +134,12 @@ elif [ "$platform" = mac ]; then
       nohup "$bin" "${long[@]}" --size "$size" >/dev/null 2>&1 &
       disown; sleep 1
       kill -0 $! 2>/dev/null || { echo "$bin exited at launch: run it by hand to see why" >&2; exit 1; }
-      # A window started from a terminal opens behind it and draws inactive.
-      osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $!) to true" >/dev/null || true
+    }
+    # A window started from a terminal opens behind it and draws inactive: bring it forward once it exists.
+    front() {
+      osascript -e "tell application \"System Events\" to tell (first process whose unix id is $(pgrep -n -f "$bin"))" \
+        -e 'set frontmost to true' -e 'perform action "AXRaise" of window 1' -e 'end tell' >/dev/null 2>&1 || true
+      sleep 0.5
     }
   else
     app="$build/Proposal.app"; bin="$app/Contents/MacOS/Proposal"; mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
@@ -147,18 +151,19 @@ elif [ "$platform" = mac ]; then
       defaults delete "$id" 2>/dev/null || true   # a saved window frame would override -width/-height
       open -n "$app" --args "${args[@]}" -width "${size%x*}" -height "${size#*x}" -ApplePersistenceIgnoreState YES
     }
+    front() { :; }   # `open` activates the app
   fi
 
   case $cmd in
     shot)
       for spec in "$@"; do
-        parse "$spec"; launch; sleep "$settle"
+        parse "$spec"; launch; sleep "$settle"; front
         file="$out/$stem-mac${SIZE:+-$SIZE}$dark.png"
         figure "$file" "$("$build/mac-shot" "$(pgrep -n -f "$bin")" "$file" "$look")" mac "Mac · $look"
       done
       pkill -f "$bin" 2>/dev/null || true;;
     run)
-      parse "$1"; launch
+      parse "$1"; launch; sleep 1; front
       echo "running '$1' as a Mac window";;
     *) usage;;
   esac
